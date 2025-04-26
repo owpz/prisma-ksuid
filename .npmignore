@@ -1,0 +1,23 @@
+# Source files
+src/
+lib/
+
+# Development files
+.git/
+.gitignore
+.idea/
+.ra-aid/
+node_modules/
+
+# Test files
+__tests__/
+*.test.ts
+*.spec.ts
+
+# Config files
+tsconfig.json
+.npmignore
+
+dist/__tests__
+dist/eslint.config.js
+dist/eslint.config.d.ts
