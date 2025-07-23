@@ -29,6 +29,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Generate Prisma client
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
       # Build package (includes type checking)
       - name: Build package
         run: npm run build

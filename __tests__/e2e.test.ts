@@ -68,8 +68,33 @@ describe("End-to-End Tests with Prisma and SQLite", () => {
       await prisma.tag.deleteMany();
       await prisma.post.deleteMany();
       await prisma.profile.deleteMany();
+
+      // Ensure all users are deleted, including any leftover from other tests
       await prisma.user.deleteMany();
+
+      // Double-check that all users are actually deleted
+      const remainingUsers = await prisma.user.count();
+      if (remainingUsers > 0) {
+        console.log(
+          `Warning: ${remainingUsers} users remain after cleanup, forcing database reset`,
+        );
+        // Force database reset if cleanup didn't work
+        const { execSync } = require("child_process");
+        execSync("npx prisma db push --force-reset", {
+          cwd: require("path").join(__dirname, ".."),
+          stdio: "pipe",
+        });
+
+        // Verify reset worked
+        const postResetUsers = await prisma.user.count();
+        if (postResetUsers > 0) {
+          throw new Error(
+            `Database reset failed, ${postResetUsers} users still remain`,
+          );
+        }
+      }
     } catch (error) {
+      console.log("Cleanup error:", error);
       // If cleanup fails, reset the entire database
       const { execSync } = require("child_process");
       try {
@@ -77,8 +102,17 @@ describe("End-to-End Tests with Prisma and SQLite", () => {
           cwd: require("path").join(__dirname, ".."),
           stdio: "pipe",
         });
+
+        // Verify reset worked
+        const postResetUsers = await prisma.user.count();
+        if (postResetUsers > 0) {
+          throw new Error(
+            `Database reset failed, ${postResetUsers} users still remain after error cleanup`,
+          );
+        }
       } catch (resetError) {
         console.log("Database reset failed, continuing with test");
+        throw resetError;
       }
     }
   });
