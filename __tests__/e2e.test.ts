@@ -40,10 +40,15 @@ describe("End-to-End Tests with Prisma and SQLite", () => {
 
     // Push the schema to create the database
     const { execSync } = require("child_process");
-    execSync("npx prisma db push --force-reset", {
-      cwd: path.join(__dirname, ".."),
-      stdio: "pipe",
-    });
+    try {
+      execSync("npx prisma db push --force-reset", {
+        cwd: path.join(__dirname, ".."),
+        stdio: "inherit",
+      });
+    } catch (error) {
+      console.error("Failed to push database schema:", error);
+      throw error;
+    }
   });
 
   afterAll(async () => {
