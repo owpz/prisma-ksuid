@@ -1,120 +1,145 @@
-[![Tests](https://github.com/owpz/prisma-ksuid/actions/workflows/test.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/test.yml) [![Publish](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml)
+[![NPM Version](https://img.shields.io/npm/v/@owpz/prisma-ksuid)](https://www.npmjs.com/package/@owpz/prisma-ksuid)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+[![Tests](https://github.com/owpz/prisma-ksuid/actions/workflows/test.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/test.yml)
+[![Publish](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml)
 
-# prisma-ksuid
+# @owpz/prisma-ksuid
 
-A Prisma middleware for generating K-Sortable Unique IDs (KSUIDs) for your database models.
+A production-ready Prisma middleware for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
 
-KSUIDs are globally unique identifiers similar to UUIDs, but with additional advantages:
+## What is a KSUID?
+
+KSUID is for K-Sortable Unique IDentifier. It is a kind of globally unique identifier similar to a [RFC 4122 UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier), built from the ground-up to be "naturally" sorted by generation timestamp without any special type-aware logic.
+
+**Key advantages over UUIDs:**
 
 - **Time-sortable**: KSUIDs can be sorted chronologically, making them ideal for databases
-- **Shorter**: More compact than UUIDs when encoded in base62
+- **Shorter**: More compact than UUIDs when encoded in base62 (27 vs 36 characters)
 - **URL-friendly**: No special characters, making them safe for URLs and file names
 - **Prefixable**: Can be prefixed with model-specific identifiers for better readability
 
-## Example schema.prisma
+For detailed KSUID documentation, see [@owpz/ksuid](https://github.com/owpz/ksuid).
 
-```shell
-model User {
-  id        String   @id @default(dbgenerated()) @map("id") // The prisma-ksuid middleware will override this with a KSUID
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+## Quick Start
 
-model PaymentIntent {
-  id        String   @id @default(dbgenerated()) @map("id") // The prisma-ksuid middleware will override this with a KSUID
-  amount    Float
-  currency  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+1. **Install the package:**
 
-model Customer {
-  id        String   @id @default(dbgenerated()) @map("id") // The prisma-ksuid middleware will override this with a KSUID
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-```
+   ```bash
+   npm install @owpz/prisma-ksuid
+   ```
 
-## Installation
+2. **Set up your Prisma schema** with string IDs:
 
-```bash
-# Using npm
-npm install @owpz/prisma-ksuid
+   ```prisma
+   model User {
+     id        String   @id @default(dbgenerated()) @map("id")
+     name      String
+     email     String   @unique
+     createdAt DateTime @default(now())
+     updatedAt DateTime @updatedAt
+   }
+   ```
 
-# Using yarn
-yarn add @owpz/prisma-ksuid
-```
+3. **Configure the middleware:**
 
-## Usage
+   ```typescript
+   import { PrismaClient } from "@prisma/client";
+   import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
 
-### Setting up the middleware with Prisma Client
+   const prisma = new PrismaClient();
+
+   prisma.$use(
+     createKsuidMiddleware({
+       prefixMap: { User: "usr_" },
+     }) as Parameters<PrismaClient["$use"]>[0],
+   );
+   ```
+
+## Advanced Usage
+
+### Multiple models with prefixes
 
 ```typescript
 import { PrismaClient } from "@prisma/client";
 import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
 
-// Define prefixes for your models
 const prefixMap = {
   User: "usr_",
+  PaymentIntent: "pi_",
+  Customer: "cus_",
   Post: "post_",
   Comment: "cmt_",
-  // Add more models as needed
 };
 
-// Create a Prisma client
 const prisma = new PrismaClient();
 
-// Apply the KSUID middleware
 prisma.$use(
-  createKsuidMiddleware({
-    prefixMap,
-  }) as Parameters<PrismaClient["$use"]>[0],
+  createKsuidMiddleware({ prefixMap }) as Parameters<PrismaClient["$use"]>[0],
 );
 
 export default prisma;
 ```
 
-### Configure with a prefix generator function
+### With fallback prefix function
 
 ```typescript
-import { PrismaClient } from "@prisma/client";
-import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
-
 const prefixMap = {
   User: "usr_",
   Post: "post_",
 };
 
-// Define a fallback prefix generator function
 const prefixFn = (model: string) => model.slice(0, 3).toLowerCase() + "_";
-
-const prisma = new PrismaClient();
 
 prisma.$use(
   createKsuidMiddleware({
     prefixMap,
-    prefixFn, // Will be used for models not found in prefixMap
+    prefixFn, // Used for models not in prefixMap
   }) as Parameters<PrismaClient["$use"]>[0],
 );
 ```
 
 ### Using the KSUID generator directly
 
+> **⚠️ DEPRECATED**: Direct usage of `generateKSUID` from this package is deprecated and will be removed in version v25.8 or greater. Use [@owpz/ksuid](https://github.com/owpz/ksuid) directly for standalone KSUID generation.
+
 ```typescript
+// ❌ Deprecated - will be removed in future versions
 import { generateKSUID } from "@owpz/prisma-ksuid";
 
-// Generate a KSUID with a prefix
-const userId = generateKSUID("usr_");
+// ✅ Recommended - use the core library instead
+import { KSUID } from "@owpz/ksuid";
+
+// Generate KSUIDs with the core library
+const userId = "usr_" + KSUID.random().toString();
 console.log(userId); // usr_1xGVYLMNZO2PfHqPnRlwu5NFNMB
 
-// Generate a KSUID without a prefix
-const id = generateKSUID();
+const id = KSUID.random().toString();
 console.log(id); // 1xGVYLMNZO2PfHqPnRlwu5NFNMB
 ```
+
+## Features
+
+This middleware supports all Prisma operations that create new records:
+
+- ✅ **Basic creates**: `prisma.user.create()`
+- ✅ **Nested creates**: Creating related records in a single operation
+- ✅ **Batch creates**: `prisma.user.createMany()`
+- ✅ **Upsert operations**: `prisma.user.upsert()` (on create)
+- ✅ **Connect or create**: Nested `connectOrCreate` operations
+- ✅ **Transaction support**: Works within `prisma.$transaction()`
+- ✅ **Flexible prefixing**: Map-based or function-based prefix generation
+- ✅ **Type safety**: Full TypeScript support with proper typing
+
+## Limitations
+
+Due to Prisma middleware constraints, this library **cannot** handle:
+
+- ❌ **Raw queries**: `prisma.$executeRaw()` and `prisma.$queryRaw()` bypass middleware
+- ❌ **Database-level operations**: Direct SQL INSERTs, stored procedures, or triggers
+- ❌ **Client extensions**: Cannot be combined with Prisma Client extensions that modify create behavior
+- ❌ **Schema-level defaults**: Cannot override `@default(cuid())` or `@default(uuid())` in schema
+- ❌ **External inserts**: Records created outside of Prisma Client (e.g., database admin tools)
+- ❌ **Retroactive ID generation**: Cannot generate KSUIDs for existing records
 
 ## API Reference
 
@@ -132,7 +157,9 @@ Creates a Prisma middleware that automatically generates KSUIDs for models durin
 
 A Prisma middleware function that can be used with `prisma.$use()`.
 
-### `generateKSUID(prefix?)`
+### `generateKSUID(prefix?)` ⚠️ DEPRECATED
+
+> **Deprecated**: Use [@owpz/ksuid](https://github.com/owpz/ksuid) directly instead.
 
 Generates a K-Sortable Unique ID (KSUID).
 
@@ -143,6 +170,17 @@ Generates a K-Sortable Unique ID (KSUID).
 #### Returns
 
 A string containing the generated KSUID with the optional prefix.
+
+## 🔌 Database Integration
+
+This middleware integrates seamlessly with Prisma's ecosystem:
+
+### **Core Prisma Features**
+
+- **Full TypeScript support** with proper type inference
+- **Transaction support** for consistent ID generation
+- **Migration compatible** with existing string primary keys
+- **Works with all databases** Prisma supports (PostgreSQL, MySQL, SQLite, etc.)
 
 ## License
 

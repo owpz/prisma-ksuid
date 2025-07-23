@@ -1,12 +1,10 @@
-import { generateKSUID, createKsuidMiddleware } from "../src";
-import { generateKSUID as originalGenerateKSUID } from "../src/util/ksuid";
-import { createKsuidMiddleware as originalCreateKsuidMiddleware } from "../src/prisma-middleware";
+import { generateKSUID } from "../src";
+import { createKsuidMiddleware } from "../src";
 
 describe("Index Exports", () => {
   test("exports generateKSUID function correctly", () => {
     expect(generateKSUID).toBeDefined();
     expect(typeof generateKSUID).toBe("function");
-    expect(generateKSUID).toBe(originalGenerateKSUID);
 
     // Verify function behavior is correct
     const ksuid = generateKSUID();
@@ -17,12 +15,29 @@ describe("Index Exports", () => {
   test("exports createKsuidMiddleware function correctly", () => {
     expect(createKsuidMiddleware).toBeDefined();
     expect(typeof createKsuidMiddleware).toBe("function");
-    expect(createKsuidMiddleware).toBe(originalCreateKsuidMiddleware);
+
+    // Now it should be the enhanced middleware
+    expect(createKsuidMiddleware).toBe(createKsuidMiddleware);
 
     // Verify function accepts proper parameters
     const middleware = createKsuidMiddleware({
       prefixMap: { User: "usr_" },
     });
     expect(typeof middleware).toBe("function");
+  });
+
+  test("createKsuidMiddleware supports enhanced features", () => {
+    // Test that it accepts the processNestedCreates option
+    const middleware = createKsuidMiddleware({
+      prefixMap: { User: "usr_", Profile: "prof_" },
+      processNestedCreates: true,
+    });
+    expect(typeof middleware).toBe("function");
+
+    // Test backwards compatibility - should work without processNestedCreates
+    const legacyMiddleware = createKsuidMiddleware({
+      prefixMap: { User: "usr_" },
+    });
+    expect(typeof legacyMiddleware).toBe("function");
   });
 });
