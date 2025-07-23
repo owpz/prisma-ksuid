@@ -138,3 +138,5 @@ dist
 .idea
 .ra-aid
 coverage/
+__tests__/generated/client
+test.db

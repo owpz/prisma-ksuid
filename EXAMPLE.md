@@ -1,16 +1,50 @@
-# KSUID Middleware Prisma Client Example
+# Example: Complete Setup
 
-This example demonstrates how to enhance a Prisma Client with KSUID middleware for model-specific ID prefixes.
+This example shows a complete implementation using the KSUID middleware with multiple models.
 
-## Installation
+## Project Structure
 
-Ensure you have the following packages installed:
-
-```bash
-npm install @prisma/client @owpz/prisma-ksuid
+```
+src/
+├── prisma/
+│   └── schema.prisma
+└── lib/
+    └── db.ts
 ```
 
-## Example code
+## schema.prisma
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(dbgenerated()) @map("id")
+  name      String
+  email     String   @unique
+  posts     Post[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id       String @id @default(dbgenerated()) @map("id")
+  title    String
+  content  String?
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+## lib/db.ts
 
 ```typescript
 import { PrismaClient } from "@prisma/client";
@@ -18,10 +52,12 @@ import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
 
 const prefixMap = {
   User: "usr_",
+  Post: "post_",
   PaymentIntent: "pi_",
   Customer: "cus_",
 };
 
+// Fallback for models not in prefixMap
 const prefixFn = (model: string) => model.slice(0, 2).toLowerCase() + "_";
 
 const prisma = new PrismaClient();
@@ -36,30 +72,28 @@ prisma.$use(
 export default prisma;
 ```
 
-## Example schema.prisma
+## Usage in your application
 
-```shell
-model User {
-  id        String   @id @default(dbgenerated()) @map("id") // The prisma-ksuid middleware will override this with a KSUID
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+```typescript
+import prisma from "./lib/db";
 
-model PaymentIntent {
-  id        String   @id @default(dbgenerated()) @map("id") // The prisma-ksuid middleware will override this with a KSUID
-  amount    Float
-  currency  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+// Create a user - ID will be generated as "usr_1xGVYLMNZO2PfHqPnRlwu5NFNMB"
+const user = await prisma.user.create({
+  data: {
+    name: "John Doe",
+    email: "john@example.com",
+  },
+});
 
-model Customer {
-  id        String   @id @default(dbgenerated()) @map("id") // The prisma-ksuid middleware will override this with a KSUID
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+// Create a post - ID will be generated as "post_1xGVYLMNZO2PfHqPnRlwu5NFNMC"
+const post = await prisma.post.create({
+  data: {
+    title: "Hello World",
+    content: "This is my first post!",
+    authorId: user.id,
+  },
+});
+
+console.log("User ID:", user.id);
+console.log("Post ID:", post.id);
 ```
