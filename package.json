@@ -20,6 +20,9 @@
     "prisma:push": "prisma db push",
     "prisma:reset": "prisma db push --force-reset"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "peerDependencies": {
     "prisma": ">=3.0.0"
   },
