@@ -40,7 +40,20 @@ For detailed KSUID documentation, see [@owpz/ksuid](https://github.com/owpz/ksui
    }
    ```
 
-3. **Configure the middleware:**
+3. **Configure the extension (Recommended for Prisma 4.16.0+):**
+
+   ```typescript
+   import { PrismaClient } from "@prisma/client";
+   import { createKsuidExtension } from "@owpz/prisma-ksuid";
+
+   const prisma = new PrismaClient().$extends(
+     createKsuidExtension({
+       prefixMap: { User: "usr_" },
+     })
+   );
+   ```
+
+   Or using the legacy middleware approach (deprecated):
 
    ```typescript
    import { PrismaClient } from "@prisma/client";
@@ -61,7 +74,7 @@ For detailed KSUID documentation, see [@owpz/ksuid](https://github.com/owpz/ksui
 
 ```typescript
 import { PrismaClient } from "@prisma/client";
-import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
+import { createKsuidExtension } from "@owpz/prisma-ksuid";
 
 const prefixMap = {
   User: "usr_",
@@ -71,10 +84,8 @@ const prefixMap = {
   Comment: "cmt_",
 };
 
-const prisma = new PrismaClient();
-
-prisma.$use(
-  createKsuidMiddleware({ prefixMap }) as Parameters<PrismaClient["$use"]>[0],
+const prisma = new PrismaClient().$extends(
+  createKsuidExtension({ prefixMap })
 );
 
 export default prisma;
@@ -90,11 +101,11 @@ const prefixMap = {
 
 const prefixFn = (model: string) => model.slice(0, 3).toLowerCase() + "_";
 
-prisma.$use(
-  createKsuidMiddleware({
+const prisma = new PrismaClient().$extends(
+  createKsuidExtension({
     prefixMap,
     prefixFn, // Used for models not in prefixMap
-  }) as Parameters<PrismaClient["$use"]>[0],
+  })
 );
 ```
 

@@ -17,6 +17,9 @@
  * Nested creates (like `user.create({ profile: { create: { ... } } })`) will also get KSUIDs.
  * To disable nested processing, set `processNestedCreates: false`.
  *
+ * @deprecated Use createKsuidExtension instead. Prisma.$use is deprecated as of Prisma 4.16.0
+ * and removed in 6.14.0. This export is maintained for backward compatibility.
+ *
  * @example
  * ```typescript
  * // Basic usage - includes nested create support
@@ -44,6 +47,42 @@
  * ```
  */
 export { createKsuidMiddleware } from "./prisma-middleware";
+
+/**
+ * Creates a Prisma Client extension that automatically generates KSUIDs for model IDs.
+ * This is the modern replacement for the deprecated $use middleware approach.
+ * 
+ * The extension applies to `create` and `createMany` operations, generating
+ * prefixed KSUIDs based on model names.
+ *
+ * **Enhanced Features**: This extension supports nested create operations by default.
+ * Nested creates (like `user.create({ profile: { create: { ... } } })`) will also get KSUIDs.
+ * To disable nested processing, set `processNestedCreates: false`.
+ *
+ * @example
+ * ```typescript
+ * // Basic usage with Prisma Client extensions
+ * import { PrismaClient } from '@prisma/client';
+ * import { createKsuidExtension } from '@owpz/prisma-ksuid';
+ *
+ * const prisma = new PrismaClient().$extends(
+ *   createKsuidExtension({
+ *     prefixMap: { User: 'usr_', Profile: 'prof_' }
+ *   })
+ * );
+ *
+ * // Both User and Profile get KSUIDs:
+ * const user = await prisma.user.create({
+ *   data: {
+ *     email: 'user@example.com',
+ *     profile: {
+ *       create: { bio: 'Hello world' } // Gets prof_ prefix!
+ *     }
+ *   }
+ * });
+ * ```
+ */
+export { createKsuidExtension } from "./prisma-extension";
 
 /**
  * Generates a K-Sortable Unique ID (KSUID) with an optional prefix.

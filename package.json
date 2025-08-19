@@ -24,7 +24,7 @@
     "node": ">=18.0.0"
   },
   "peerDependencies": {
-    "prisma": ">=3.0.0"
+    "@prisma/client": ">=4.16.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
