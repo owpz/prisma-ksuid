@@ -1,6 +1,7 @@
 import { PrismaClient } from "./generated/client";
 import { createKsuidExtension } from "../src";
 import { execSync } from "child_process";
+import { KSUID } from "@owpz/ksuid";
 
 describe("Extension Integration Tests", () => {
   let prisma: PrismaClient;
@@ -289,5 +290,329 @@ describe("Extension Integration Tests", () => {
     });
 
     expect(user.id).toBe(customId);
+  });
+
+  describe("Concurrency Tests", () => {
+    test("handles concurrent creates without ID collision", async () => {
+      const prefixMap = {
+        User: "usr_",
+      };
+
+      prisma = new PrismaClient().$extends(
+        createKsuidExtension({ prefixMap })
+      ) as PrismaClient;
+
+      // Create 100 users concurrently
+      const promises = Array.from({ length: 100 }, (_, i) =>
+        prisma.user.create({
+          data: {
+            email: `concurrent${i}@example.com`,
+            name: `Concurrent User ${i}`,
+          },
+        })
+      );
+
+      const users = await Promise.all(promises);
+      const ids = users.map((u) => u.id);
+      const uniqueIds = new Set(ids);
+
+      // All IDs should be unique
+      expect(uniqueIds.size).toBe(100);
+
+      // All should have correct prefix
+      users.forEach((user) => {
+        expect(user.id).toMatch(/^usr_[a-zA-Z0-9]{27}$/);
+      });
+    });
+
+    test("handles concurrent nested creates", async () => {
+      const prefixMap = {
+        User: "usr_",
+        Profile: "prof_",
+        Post: "post_",
+      };
+
+      prisma = new PrismaClient().$extends(
+        createKsuidExtension({ prefixMap, processNestedCreates: true })
+      ) as PrismaClient;
+
+      const promises = Array.from({ length: 20 }, (_, i) =>
+        prisma.user.create({
+          data: {
+            email: `nested-concurrent${i}@example.com`,
+            name: `Nested Concurrent User ${i}`,
+            profile: {
+              create: {
+                bio: `Bio for user ${i}`,
+              },
+            },
+            posts: {
+              create: {
+                title: `Post by user ${i}`,
+                content: `Content from user ${i}`,
+                published: i % 2 === 0,
+              },
+            },
+          },
+          include: {
+            profile: true,
+            posts: true,
+          },
+        })
+      );
+
+      const users = await Promise.all(promises);
+
+      // Collect all IDs
+      const allIds = new Set<string>();
+      users.forEach((user) => {
+        allIds.add(user.id);
+        if (user.profile) allIds.add(user.profile.id);
+        user.posts.forEach((post) => allIds.add(post.id));
+      });
+
+      // All IDs should be unique across all models
+      expect(allIds.size).toBe(60); // 20 users + 20 profiles + 20 posts
+
+      // Verify prefixes
+      users.forEach((user) => {
+        expect(user.id).toMatch(/^usr_[a-zA-Z0-9]{27}$/);
+        expect(user.profile?.id).toMatch(/^prof_[a-zA-Z0-9]{27}$/);
+        expect(user.posts[0].id).toMatch(/^post_[a-zA-Z0-9]{27}$/);
+      });
+    });
+
+    test("handles race conditions in createMany", async () => {
+      const prefixMap = {
+        User: "usr_",
+      };
+
+      prisma = new PrismaClient().$extends(
+        createKsuidExtension({ prefixMap })
+      ) as PrismaClient;
+
+      // Run multiple createMany operations concurrently
+      const batches = Array.from({ length: 10 }, (_, batchIndex) =>
+        prisma.user.createMany({
+          data: Array.from({ length: 10 }, (_, userIndex) => ({
+            email: `batch${batchIndex}-user${userIndex}@example.com`,
+            name: `Batch ${batchIndex} User ${userIndex}`,
+          })),
+        })
+      );
+
+      const results = await Promise.all(batches);
+      const totalCreated = results.reduce((sum, result) => sum + result.count, 0);
+      expect(totalCreated).toBe(100);
+
+      // Verify all have unique IDs
+      const allUsers = await prisma.user.findMany({
+        where: {
+          email: {
+            contains: "batch",
+          },
+        },
+      });
+
+      const ids = new Set(allUsers.map((u) => u.id));
+      expect(ids.size).toBe(100);
+    });
+  });
+
+  describe("Complex Integration Scenarios", () => {
+    test("handles complex business workflow", async () => {
+      const prefixMap = {
+        User: "usr_",
+        Product: "prod_",
+        Order: "ord_",
+        OrderItem: "item_",
+      };
+
+      prisma = new PrismaClient().$extends(
+        createKsuidExtension({ prefixMap })
+      ) as PrismaClient;
+
+      // Simulate e-commerce workflow
+      // 1. Create products
+      const products = await prisma.product.createMany({
+        data: [
+          { name: "Laptop", price: 999.99, category: "Electronics" },
+          { name: "Mouse", price: 29.99, category: "Electronics" },
+          { name: "Keyboard", price: 79.99, category: "Electronics" },
+        ],
+      });
+
+      const productList = await prisma.product.findMany();
+      expect(productList).toHaveLength(3);
+      productList.forEach((p) => {
+        expect(p.id).toMatch(/^prod_[a-zA-Z0-9]{27}$/);
+      });
+
+      // 2. Create user
+      const user = await prisma.user.create({
+        data: {
+          email: "shopper@example.com",
+          name: "Happy Shopper",
+        },
+      });
+
+      // 3. Create order with items
+      const order = await prisma.order.create({
+        data: {
+          total: 1109.97,
+          status: "pending",
+          items: {
+            create: productList.map((product) => ({
+              productId: product.id,
+              quantity: 1,
+              price: product.price,
+            })),
+          },
+        },
+        include: {
+          items: true,
+        },
+      });
+
+      expect(order.id).toMatch(/^ord_[a-zA-Z0-9]{27}$/);
+      expect(order.items).toHaveLength(3);
+      order.items.forEach((item) => {
+        expect(item.id).toMatch(/^item_[a-zA-Z0-9]{27}$/);
+      });
+    });
+
+    test("handles data migration scenario", async () => {
+      const prefixMap = {
+        User: "usr_",
+        Post: "post_",
+      };
+
+      prisma = new PrismaClient().$extends(
+        createKsuidExtension({ prefixMap })
+      ) as PrismaClient;
+
+      // Simulate migrating data with mix of new and existing IDs
+      const existingUsers = [
+        { id: "usr_existing001", email: "old1@example.com", name: "Old User 1" },
+        { id: "usr_existing002", email: "old2@example.com", name: "Old User 2" },
+      ];
+
+      const newUsers = [
+        { email: "new1@example.com", name: "New User 1" },
+        { email: "new2@example.com", name: "New User 2" },
+      ];
+
+      // Create with existing IDs
+      for (const userData of existingUsers) {
+        const user = await prisma.user.create({ data: userData });
+        expect(user.id).toBe(userData.id);
+      }
+
+      // Create without IDs (should generate KSUIDs)
+      for (const userData of newUsers) {
+        const user = await prisma.user.create({ data: userData });
+        expect(user.id).toMatch(/^usr_[a-zA-Z0-9]{27}$/);
+      }
+
+      const allUsers = await prisma.user.findMany();
+      expect(allUsers).toHaveLength(4);
+    });
+
+    test("handles multi-tenant scenario with prefixFn", async () => {
+      const tenantPrefixes: Record<string, string> = {
+        tenant1: "t1",
+        tenant2: "t2",
+        tenant3: "t3",
+      };
+
+      let currentTenant = "tenant1";
+
+      const prefixMap = {
+        User: "usr_",
+      };
+
+      const prefixFn = (model: string) => {
+        const tenantPrefix = tenantPrefixes[currentTenant] || "unknown";
+        return `${tenantPrefix}_${model.toLowerCase().slice(0, 3)}_`;
+      };
+
+      prisma = new PrismaClient().$extends(
+        createKsuidExtension({ prefixMap, prefixFn })
+      ) as PrismaClient;
+
+      // Create posts for different tenants
+      const posts = [];
+
+      for (const tenant of Object.keys(tenantPrefixes)) {
+        currentTenant = tenant;
+        
+        // Create user for tenant
+        const user = await prisma.user.create({
+          data: {
+            email: `${tenant}@example.com`,
+            name: `${tenant} User`,
+          },
+        });
+
+        // Create post (will use prefixFn since Post not in prefixMap)
+        const post = await prisma.post.create({
+          data: {
+            title: `Post for ${tenant}`,
+            content: `Content from ${tenant}`,
+            published: true,
+            authorId: user.id,
+          },
+        });
+
+        posts.push({ tenant, post });
+      }
+
+      // Verify tenant-specific prefixes
+      expect(posts[0].post.id).toMatch(/^t1_pos_[a-zA-Z0-9]{27}$/);
+      expect(posts[1].post.id).toMatch(/^t2_pos_[a-zA-Z0-9]{27}$/);
+      expect(posts[2].post.id).toMatch(/^t3_pos_[a-zA-Z0-9]{27}$/);
+    });
+
+    test("handles KSUID chronological properties", async () => {
+      const prefixMap = {
+        Order: "ord_",
+      };
+
+      prisma = new PrismaClient().$extends(
+        createKsuidExtension({ prefixMap })
+      ) as PrismaClient;
+
+      const orders = [];
+      
+      // Create orders with deliberate time gaps
+      for (let i = 0; i < 5; i++) {
+        const order = await prisma.order.create({
+          data: {
+            total: (i + 1) * 100,
+            status: "completed",
+          },
+        });
+        orders.push(order);
+        
+        // Wait to ensure different timestamps
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      // Extract KSUIDs and verify chronological ordering
+      const ksuidStrings = orders.map(o => o.id.slice(4)); // Remove prefix
+      const ksuids = ksuidStrings.map(s => KSUID.parse(s));
+      
+      // Verify each KSUID is newer than the previous
+      for (let i = 1; i < ksuids.length; i++) {
+        const prev = ksuids[i - 1];
+        const curr = ksuids[i];
+        expect(curr.compare(prev)).toBeGreaterThan(0);
+      }
+
+      // Verify lexicographical sorting matches chronological order
+      const sortedIds = [...orders.map(o => o.id)].sort();
+      const originalIds = orders.map(o => o.id);
+      expect(sortedIds).toEqual(originalIds);
+    });
   });
 });
