@@ -13,7 +13,7 @@ interface KsuidExtensionOptions {
 /**
  * Creates a Prisma Client extension that automatically generates KSUIDs for model IDs.
  * This is the modern replacement for the deprecated $use middleware approach.
- * 
+ *
  * @example
  * ```typescript
  * const prisma = new PrismaClient().$extends(
@@ -152,7 +152,9 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
 
           // Validate that we have a non-empty prefix for this model
           if (!prefix || prefix.length === 0) {
-            throw new Error(`Prefix not defined or invalid for model "${model}".`);
+            throw new Error(
+              `Prefix not defined or invalid for model "${model}".`,
+            );
           }
 
           const data = args.data as Record<string, unknown>;
@@ -179,7 +181,9 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
 
           // Validate that we have a non-empty prefix for this model
           if (!prefix || prefix.length === 0) {
-            throw new Error(`Prefix not defined or invalid for model "${model}".`);
+            throw new Error(
+              `Prefix not defined or invalid for model "${model}".`,
+            );
           }
 
           if (Array.isArray(args.data)) {
@@ -189,7 +193,10 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
                 item &&
                 typeof item === "object" &&
                 !Array.isArray(item) &&
-                (!('id' in item) || item.id === "" || item.id === null || item.id === undefined)
+                (!("id" in item) ||
+                  item.id === "" ||
+                  item.id === null ||
+                  item.id === undefined)
               ) {
                 (item as any).id = generateKSUID(prefix);
               }

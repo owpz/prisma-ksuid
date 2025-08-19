@@ -24,7 +24,7 @@ describe("Extension E2E Tests", () => {
           Order: "ord_",
           OrderItem: "item_",
         },
-      })
+      }),
     ) as PrismaClient;
 
     // Clean up all data
@@ -100,7 +100,7 @@ describe("Extension E2E Tests", () => {
 
     test("respects existing IDs when provided", async () => {
       const customId = "usr_custom1234567890123456789";
-      
+
       const user = await prisma.user.create({
         data: {
           id: customId,
@@ -301,7 +301,7 @@ describe("Extension E2E Tests", () => {
 
     test("maintains chronological ordering", async () => {
       const users = [];
-      
+
       // Create users with small delays to ensure different timestamps
       for (let i = 0; i < 5; i++) {
         const user = await prisma.user.create({
@@ -341,7 +341,7 @@ describe("Extension E2E Tests", () => {
             email,
             name: "Second User",
           },
-        })
+        }),
       ).rejects.toThrow();
     });
 
@@ -356,7 +356,7 @@ describe("Extension E2E Tests", () => {
             published: false,
             authorId: invalidUserId,
           },
-        })
+        }),
       ).rejects.toThrow();
     });
 
@@ -427,7 +427,7 @@ describe("Extension E2E Tests", () => {
 
     test("can insert with raw queries and manual KSUID", async () => {
       const manualKsuid = `usr_${KSUID.random().toString()}`;
-      
+
       await prisma.$executeRaw`
         INSERT INTO "User" (id, email, name, "createdAt")
         VALUES (${manualKsuid}, ${"rawinsert@example.com"}, ${"Raw Insert User"}, ${new Date()})
@@ -507,8 +507,8 @@ describe("Extension E2E Tests", () => {
               profile: true,
               posts: true,
             },
-          })
-        )
+          }),
+        ),
       );
 
       const endTime = Date.now();

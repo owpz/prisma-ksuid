@@ -26,7 +26,7 @@ describe("Extension Integration Tests", () => {
     };
 
     prisma = new PrismaClient().$extends(
-      createKsuidExtension({ prefixMap })
+      createKsuidExtension({ prefixMap }),
     ) as PrismaClient;
 
     // Create a user
@@ -76,7 +76,7 @@ describe("Extension Integration Tests", () => {
     };
 
     prisma = new PrismaClient().$extends(
-      createKsuidExtension({ prefixMap })
+      createKsuidExtension({ prefixMap }),
     ) as PrismaClient;
 
     // Clean up any existing users first
@@ -128,7 +128,7 @@ describe("Extension Integration Tests", () => {
     };
 
     prisma = new PrismaClient().$extends(
-      createKsuidExtension({ prefixMap, processNestedCreates: true })
+      createKsuidExtension({ prefixMap, processNestedCreates: true }),
     ) as PrismaClient;
 
     // Create user with nested profile and post
@@ -177,7 +177,7 @@ describe("Extension Integration Tests", () => {
     };
 
     prisma = new PrismaClient().$extends(
-      createKsuidExtension({ prefixMap, prefixFn })
+      createKsuidExtension({ prefixMap, prefixFn }),
     ) as PrismaClient;
 
     // Create a post (not in prefixMap, should use prefixFn)
@@ -209,7 +209,7 @@ describe("Extension Integration Tests", () => {
     };
 
     prisma = new PrismaClient().$extends(
-      createKsuidExtension({ prefixMap })
+      createKsuidExtension({ prefixMap }),
     ) as PrismaClient;
 
     const user = await prisma.user.create({
@@ -228,7 +228,7 @@ describe("Extension Integration Tests", () => {
           published: false,
           authorId: user.id,
         },
-      })
+      }),
     ).rejects.toThrow('Prefix not defined or invalid for model "Post"');
   });
 
@@ -241,7 +241,7 @@ describe("Extension Integration Tests", () => {
 
     // Create extension with processNestedCreates disabled
     prisma = new PrismaClient().$extends(
-      createKsuidExtension({ prefixMap, processNestedCreates: false })
+      createKsuidExtension({ prefixMap, processNestedCreates: false }),
     ) as PrismaClient;
 
     // Create user with nested post - nested post should get default cuid, not our KSUID
@@ -264,7 +264,7 @@ describe("Extension Integration Tests", () => {
 
     // User should have KSUID
     expect(user.id).toMatch(/^usr_[a-zA-Z0-9]{27}$/);
-    
+
     // Post should NOT have our prefix (should have default cuid)
     expect(user.posts[0].id).not.toMatch(/^post_/);
     expect(user.posts[0].id.length).not.toBe(32); // Not our KSUID length
@@ -276,7 +276,7 @@ describe("Extension Integration Tests", () => {
     };
 
     prisma = new PrismaClient().$extends(
-      createKsuidExtension({ prefixMap })
+      createKsuidExtension({ prefixMap }),
     ) as PrismaClient;
 
     const customId = "usr_custom123456789012345678901";
@@ -299,7 +299,7 @@ describe("Extension Integration Tests", () => {
       };
 
       prisma = new PrismaClient().$extends(
-        createKsuidExtension({ prefixMap })
+        createKsuidExtension({ prefixMap }),
       ) as PrismaClient;
 
       // Create 100 users concurrently
@@ -309,7 +309,7 @@ describe("Extension Integration Tests", () => {
             email: `concurrent${i}@example.com`,
             name: `Concurrent User ${i}`,
           },
-        })
+        }),
       );
 
       const users = await Promise.all(promises);
@@ -333,7 +333,7 @@ describe("Extension Integration Tests", () => {
       };
 
       prisma = new PrismaClient().$extends(
-        createKsuidExtension({ prefixMap, processNestedCreates: true })
+        createKsuidExtension({ prefixMap, processNestedCreates: true }),
       ) as PrismaClient;
 
       const promises = Array.from({ length: 20 }, (_, i) =>
@@ -358,7 +358,7 @@ describe("Extension Integration Tests", () => {
             profile: true,
             posts: true,
           },
-        })
+        }),
       );
 
       const users = await Promise.all(promises);
@@ -388,7 +388,7 @@ describe("Extension Integration Tests", () => {
       };
 
       prisma = new PrismaClient().$extends(
-        createKsuidExtension({ prefixMap })
+        createKsuidExtension({ prefixMap }),
       ) as PrismaClient;
 
       // Run multiple createMany operations concurrently
@@ -398,11 +398,14 @@ describe("Extension Integration Tests", () => {
             email: `batch${batchIndex}-user${userIndex}@example.com`,
             name: `Batch ${batchIndex} User ${userIndex}`,
           })),
-        })
+        }),
       );
 
       const results = await Promise.all(batches);
-      const totalCreated = results.reduce((sum, result) => sum + result.count, 0);
+      const totalCreated = results.reduce(
+        (sum, result) => sum + result.count,
+        0,
+      );
       expect(totalCreated).toBe(100);
 
       // Verify all have unique IDs
@@ -429,7 +432,7 @@ describe("Extension Integration Tests", () => {
       };
 
       prisma = new PrismaClient().$extends(
-        createKsuidExtension({ prefixMap })
+        createKsuidExtension({ prefixMap }),
       ) as PrismaClient;
 
       // Simulate e-commerce workflow
@@ -488,13 +491,21 @@ describe("Extension Integration Tests", () => {
       };
 
       prisma = new PrismaClient().$extends(
-        createKsuidExtension({ prefixMap })
+        createKsuidExtension({ prefixMap }),
       ) as PrismaClient;
 
       // Simulate migrating data with mix of new and existing IDs
       const existingUsers = [
-        { id: "usr_existing001", email: "old1@example.com", name: "Old User 1" },
-        { id: "usr_existing002", email: "old2@example.com", name: "Old User 2" },
+        {
+          id: "usr_existing001",
+          email: "old1@example.com",
+          name: "Old User 1",
+        },
+        {
+          id: "usr_existing002",
+          email: "old2@example.com",
+          name: "Old User 2",
+        },
       ];
 
       const newUsers = [
@@ -537,7 +548,7 @@ describe("Extension Integration Tests", () => {
       };
 
       prisma = new PrismaClient().$extends(
-        createKsuidExtension({ prefixMap, prefixFn })
+        createKsuidExtension({ prefixMap, prefixFn }),
       ) as PrismaClient;
 
       // Create posts for different tenants
@@ -545,7 +556,7 @@ describe("Extension Integration Tests", () => {
 
       for (const tenant of Object.keys(tenantPrefixes)) {
         currentTenant = tenant;
-        
+
         // Create user for tenant
         const user = await prisma.user.create({
           data: {
@@ -579,11 +590,11 @@ describe("Extension Integration Tests", () => {
       };
 
       prisma = new PrismaClient().$extends(
-        createKsuidExtension({ prefixMap })
+        createKsuidExtension({ prefixMap }),
       ) as PrismaClient;
 
       const orders = [];
-      
+
       // Create orders with deliberate time gaps
       for (let i = 0; i < 5; i++) {
         const order = await prisma.order.create({
@@ -593,15 +604,15 @@ describe("Extension Integration Tests", () => {
           },
         });
         orders.push(order);
-        
+
         // Wait to ensure different timestamps
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
 
       // Extract KSUIDs and verify chronological ordering
-      const ksuidStrings = orders.map(o => o.id.slice(4)); // Remove prefix
-      const ksuids = ksuidStrings.map(s => KSUID.parse(s));
-      
+      const ksuidStrings = orders.map((o) => o.id.slice(4)); // Remove prefix
+      const ksuids = ksuidStrings.map((s) => KSUID.parse(s));
+
       // Verify each KSUID is newer than the previous
       for (let i = 1; i < ksuids.length; i++) {
         const prev = ksuids[i - 1];
@@ -610,8 +621,8 @@ describe("Extension Integration Tests", () => {
       }
 
       // Verify lexicographical sorting matches chronological order
-      const sortedIds = [...orders.map(o => o.id)].sort();
-      const originalIds = orders.map(o => o.id);
+      const sortedIds = [...orders.map((o) => o.id)].sort();
+      const originalIds = orders.map((o) => o.id);
       expect(sortedIds).toEqual(originalIds);
     });
   });

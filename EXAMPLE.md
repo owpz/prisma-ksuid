@@ -66,7 +66,7 @@ const prisma = new PrismaClient().$extends(
   createKsuidExtension({
     prefixMap,
     prefixFn,
-  })
+  }),
 );
 
 export default prisma;

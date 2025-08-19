@@ -49,7 +49,7 @@ For detailed KSUID documentation, see [@owpz/ksuid](https://github.com/owpz/ksui
    const prisma = new PrismaClient().$extends(
      createKsuidExtension({
        prefixMap: { User: "usr_" },
-     })
+     }),
    );
    ```
 
@@ -84,9 +84,7 @@ const prefixMap = {
   Comment: "cmt_",
 };
 
-const prisma = new PrismaClient().$extends(
-  createKsuidExtension({ prefixMap })
-);
+const prisma = new PrismaClient().$extends(createKsuidExtension({ prefixMap }));
 
 export default prisma;
 ```
@@ -105,7 +103,7 @@ const prisma = new PrismaClient().$extends(
   createKsuidExtension({
     prefixMap,
     prefixFn, // Used for models not in prefixMap
-  })
+  }),
 );
 ```
 

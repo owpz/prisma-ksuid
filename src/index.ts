@@ -51,7 +51,7 @@ export { createKsuidMiddleware } from "./prisma-middleware";
 /**
  * Creates a Prisma Client extension that automatically generates KSUIDs for model IDs.
  * This is the modern replacement for the deprecated $use middleware approach.
- * 
+ *
  * The extension applies to `create` and `createMany` operations, generating
  * prefixed KSUIDs based on model names.
  *

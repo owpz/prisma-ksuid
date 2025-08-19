@@ -48,7 +48,7 @@ describe("Extension Error Handling", () => {
         createKsuidExtension({
           prefixMap: { User: "usr_" },
           // No Post prefix and no prefixFn
-        })
+        }),
       ) as PrismaClient;
 
       const user = await prisma.user.create({
@@ -66,7 +66,7 @@ describe("Extension Error Handling", () => {
             published: false,
             authorId: user.id,
           },
-        })
+        }),
       ).rejects.toThrow('Prefix not defined or invalid for model "Post"');
     });
 
@@ -74,7 +74,7 @@ describe("Extension Error Handling", () => {
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: { User: "" }, // Empty prefix
-        })
+        }),
       ) as PrismaClient;
 
       await expect(
@@ -83,7 +83,7 @@ describe("Extension Error Handling", () => {
             email: "empty-prefix@example.com",
             name: "Empty Prefix User",
           },
-        })
+        }),
       ).rejects.toThrow('Prefix not defined or invalid for model "User"');
     });
 
@@ -95,7 +95,7 @@ describe("Extension Error Handling", () => {
       };
 
       prisma = new PrismaClient().$extends(
-        createKsuidExtension({ prefixMap, prefixFn })
+        createKsuidExtension({ prefixMap, prefixFn }),
       ) as PrismaClient;
 
       const user = await prisma.user.create({
@@ -113,7 +113,7 @@ describe("Extension Error Handling", () => {
             published: false,
             authorId: user.id,
           },
-        })
+        }),
       ).rejects.toThrow('Prefix not defined or invalid for model "Post"');
     });
 
@@ -124,7 +124,7 @@ describe("Extension Error Handling", () => {
       };
 
       prisma = new PrismaClient().$extends(
-        createKsuidExtension({ prefixMap, prefixFn })
+        createKsuidExtension({ prefixMap, prefixFn }),
       ) as PrismaClient;
 
       const user = await prisma.user.create({
@@ -142,7 +142,7 @@ describe("Extension Error Handling", () => {
             published: false,
             authorId: user.id,
           },
-        })
+        }),
       ).rejects.toThrow("PrefixFn error");
     });
   });
@@ -152,12 +152,12 @@ describe("Extension Error Handling", () => {
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: { User: "usr_" },
-        })
+        }),
       ) as PrismaClient;
 
       // This should fail with Prisma validation, not our extension
       await expect(
-        (prisma.user.create as any)({ data: null })
+        (prisma.user.create as any)({ data: null }),
       ).rejects.toThrow();
     });
 
@@ -165,11 +165,11 @@ describe("Extension Error Handling", () => {
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: { User: "usr_" },
-        })
+        }),
       ) as PrismaClient;
 
       await expect(
-        (prisma.user.create as any)({ data: undefined })
+        (prisma.user.create as any)({ data: undefined }),
       ).rejects.toThrow();
     });
 
@@ -177,11 +177,11 @@ describe("Extension Error Handling", () => {
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: { User: "usr_" },
-        })
+        }),
       ) as PrismaClient;
 
       await expect(
-        (prisma.user.createMany as any)({ data: "not-an-array" })
+        (prisma.user.createMany as any)({ data: "not-an-array" }),
       ).rejects.toThrow();
     });
 
@@ -189,7 +189,7 @@ describe("Extension Error Handling", () => {
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: { User: "usr_" },
-        })
+        }),
       ) as PrismaClient;
 
       const result = await prisma.user.createMany({
@@ -208,14 +208,14 @@ describe("Extension Error Handling", () => {
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: { User: "usr_" },
-        })
+        }),
       ) as PrismaClient;
 
       // Empty objects should fail Prisma validation (missing required fields)
       await expect(
         prisma.user.createMany({
           data: [{} as any],
-        })
+        }),
       ).rejects.toThrow();
     });
   });
@@ -226,7 +226,7 @@ describe("Extension Error Handling", () => {
         createKsuidExtension({
           prefixMap: { User: "usr_", Profile: "prof_" },
           processNestedCreates: true,
-        })
+        }),
       ) as PrismaClient;
 
       await expect(
@@ -238,7 +238,7 @@ describe("Extension Error Handling", () => {
               create: null as any, // Invalid nested create
             },
           },
-        })
+        }),
       ).rejects.toThrow();
     });
 
@@ -247,7 +247,7 @@ describe("Extension Error Handling", () => {
         createKsuidExtension({
           prefixMap: { User: "usr_" }, // No Profile prefix
           processNestedCreates: true,
-        })
+        }),
       ) as PrismaClient;
 
       // This should throw because Profile has no prefix
@@ -262,7 +262,7 @@ describe("Extension Error Handling", () => {
               },
             },
           },
-        })
+        }),
       ).rejects.toThrow('Prefix not defined or invalid for model "Profile"');
     });
 
@@ -271,7 +271,7 @@ describe("Extension Error Handling", () => {
         createKsuidExtension({
           prefixMap: { User: "usr_", Post: "post_" },
           processNestedCreates: true,
-        })
+        }),
       ) as PrismaClient;
 
       // Create a user first
@@ -298,12 +298,13 @@ describe("Extension Error Handling", () => {
 
   describe("Edge Cases", () => {
     test("handles very long prefix strings", async () => {
-      const longPrefix = "this_is_a_very_long_prefix_that_exceeds_normal_length_";
-      
+      const longPrefix =
+        "this_is_a_very_long_prefix_that_exceeds_normal_length_";
+
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: { User: longPrefix },
-        })
+        }),
       ) as PrismaClient;
 
       const user = await prisma.user.create({
@@ -319,11 +320,11 @@ describe("Extension Error Handling", () => {
 
     test("handles special characters in prefix", async () => {
       const specialPrefix = "usr-2024_v1.0#";
-      
+
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: { User: specialPrefix },
-        })
+        }),
       ) as PrismaClient;
 
       const user = await prisma.user.create({
@@ -346,7 +347,7 @@ describe("Extension Error Handling", () => {
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: largePrefixMap,
-        })
+        }),
       ) as PrismaClient;
 
       const user = await prisma.user.create({
@@ -363,7 +364,7 @@ describe("Extension Error Handling", () => {
       prisma = new PrismaClient().$extends(
         createKsuidExtension({
           prefixMap: { User: "usr_" },
-        })
+        }),
       ) as PrismaClient;
 
       const promises = [];
@@ -374,16 +375,16 @@ describe("Extension Error Handling", () => {
               email: `rapid${i}@example.com`,
               name: `Rapid User ${i}`,
             },
-          })
+          }),
         );
       }
 
       const users = await Promise.all(promises);
-      const ids = users.map(u => u.id);
+      const ids = users.map((u) => u.id);
       const uniqueIds = new Set(ids);
 
       expect(uniqueIds.size).toBe(10);
-      users.forEach(user => {
+      users.forEach((user) => {
         expect(user.id).toMatch(/^usr_[a-zA-Z0-9]{27}$/);
       });
     });
