@@ -11,4 +11,5 @@ module.exports = {
   collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts"],
   testTimeout: 30000, // Increase timeout for E2E tests
   setupFilesAfterEnv: [],
+  maxWorkers: 1, // Prevent parallel DB resets that break SQLite foreign keys
 };
