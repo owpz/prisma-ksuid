@@ -23,6 +23,6 @@ jobs:
           # Allow GHSA IDs to be ignored
           # Example: allow-ghsa: ["GHSA-xxxx-xxxx-xxxx"]
           # Fail if dependencies have incompatible licenses
-          deny-licenses: ["GPL-3.0", "AGPL-3.0", "LGPL-3.0", "CC-BY-NC-1.0"]
+          deny-licenses: "GPL-3.0, AGPL-3.0, LGPL-3.0, CC-BY-NC-1.0"
           # Comment on PR with review summary
           comment-summary-in-pr: always
