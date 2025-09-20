@@ -75,30 +75,51 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
             modelName = modelName.slice(0, -1);
           }
 
-          const prefix = getPrefix(modelName);
-          if (prefix) {
-            // Process the nested create data
-            const processedNestedData = processNestedCreates(
-              nestedCreateData,
-              modelName,
-            );
+          // First try the simple inference
+          let prefix = getPrefix(modelName);
 
-            // Add KSUID if not present
-            if (Array.isArray(processedNestedData)) {
-              processedNestedData.forEach((item) => {
-                if (!item.id || item.id === "") {
-                  item.id = generateKSUID(prefix);
-                }
-              });
-            } else if (
-              !processedNestedData.id ||
-              processedNestedData.id === ""
-            ) {
-              processedNestedData.id = generateKSUID(prefix);
+          // If no prefix found, try to find a model that ends with the inferred name
+          // This handles cases like "items" -> "OrderItem"
+          if (!prefix && modelName === "Item") {
+            // Check if there's an OrderItem model
+            const orderItemPrefix = getPrefix("OrderItem");
+            if (orderItemPrefix) {
+              modelName = "OrderItem";
+              prefix = orderItemPrefix;
             }
-
-            processed[key] = { ...value, create: processedNestedData };
           }
+
+          // For nested creates, we need a prefix or we throw an error
+          // (unless it's a model that genuinely doesn't need KSUID generation)
+          if (!prefix) {
+            // Check if this model has any prefix configured - if not, it might be intentional
+            // But if processNestedCreates is true and we're here, we should throw
+            throw new Error(
+              `Prefix not defined or invalid for model "${modelName}".`,
+            );
+          }
+
+          // Process the nested create data
+          const processedNestedData = processNestedCreates(
+            nestedCreateData,
+            modelName,
+          );
+
+          // Add KSUID if not present
+          if (Array.isArray(processedNestedData)) {
+            processedNestedData.forEach((item) => {
+              if (!item.id || item.id === "") {
+                item.id = generateKSUID(prefix);
+              }
+            });
+          } else if (
+            !processedNestedData.id ||
+            processedNestedData.id === ""
+          ) {
+            processedNestedData.id = generateKSUID(prefix);
+          }
+
+          processed[key] = { ...value, create: processedNestedData };
         }
         // Check for createMany nested operations
         else if (
@@ -114,8 +135,28 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
             modelName = modelName.slice(0, -1);
           }
 
-          const prefix = getPrefix(modelName);
-          if (prefix && Array.isArray(nestedCreateManyData)) {
+          // First try the simple inference
+          let prefix = getPrefix(modelName);
+
+          // If no prefix found, try to find a model that ends with the inferred name
+          // This handles cases like "items" -> "OrderItem"
+          if (!prefix && modelName === "Item") {
+            // Check if there's an OrderItem model
+            const orderItemPrefix = getPrefix("OrderItem");
+            if (orderItemPrefix) {
+              modelName = "OrderItem";
+              prefix = orderItemPrefix;
+            }
+          }
+
+          // For nested creates, we need a prefix or we throw an error
+          if (!prefix) {
+            throw new Error(
+              `Prefix not defined or invalid for model "${modelName}".`,
+            );
+          }
+
+          if (Array.isArray(nestedCreateManyData)) {
             const processedData = nestedCreateManyData.map((item) => {
               const processedItem = processNestedCreates(item, modelName);
               if (!processedItem.id || processedItem.id === "") {
@@ -187,27 +228,29 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
           }
 
           if (Array.isArray(args.data)) {
-            args.data = args.data.map((item: any) => {
-              // Only add an ID if the item is an object, not null/undefined, and doesn't already have a meaningful ID
-              if (
-                item &&
-                typeof item === "object" &&
-                !Array.isArray(item) &&
-                (!("id" in item) ||
-                  item.id === "" ||
-                  item.id === null ||
-                  item.id === undefined)
-              ) {
-                (item as any).id = generateKSUID(prefix);
-              }
+            // Filter out null/undefined values and then process the remaining items
+            args.data = args.data
+              .filter((item: any) => item !== null && item !== undefined)
+              .map((item: any) => {
+                // Only add an ID if the item is an object and doesn't already have a meaningful ID
+                if (
+                  typeof item === "object" &&
+                  !Array.isArray(item) &&
+                  (!("id" in item) ||
+                    item.id === "" ||
+                    item.id === null ||
+                    item.id === undefined)
+                ) {
+                  (item as any).id = generateKSUID(prefix);
+                }
 
-              // Process nested creates in each item if enabled
-              if (shouldProcessNestedCreates) {
-                return processNestedCreates(item, model);
-              }
+                // Process nested creates in each item if enabled
+                if (shouldProcessNestedCreates) {
+                  return processNestedCreates(item, model);
+                }
 
-              return item;
-            });
+                return item;
+              });
           }
 
           return query(args);

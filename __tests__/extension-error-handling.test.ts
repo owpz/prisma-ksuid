@@ -1,8 +1,20 @@
 import { PrismaClient } from "./generated/client";
 import { createKsuidExtension } from "../src";
+import { execSync } from "child_process";
 
 describe("Extension Error Handling", () => {
   let prisma: PrismaClient;
+
+  beforeAll(() => {
+    // Reset the test database
+    execSync("npm run prisma:reset", {
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: "test"
+      }
+    });
+  });
 
   afterEach(async () => {
     if (prisma) {
@@ -100,7 +112,7 @@ describe("Extension Error Handling", () => {
 
       const user = await prisma.user.create({
         data: {
-          email: "test@example.com",
+          email: `custom-prefix-${Date.now()}@example.com`,
           name: "Test User",
         },
       });
@@ -129,7 +141,7 @@ describe("Extension Error Handling", () => {
 
       const user = await prisma.user.create({
         data: {
-          email: "test@example.com",
+          email: `prefixfn-error-${Date.now()}@example.com`,
           name: "Test User",
         },
       });
