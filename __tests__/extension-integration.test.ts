@@ -8,11 +8,22 @@ describe("Extension Integration Tests", () => {
 
   beforeAll(() => {
     // Reset the test database
-    execSync("npm run prisma:reset", { stdio: "inherit" });
+    execSync("npm run prisma:reset", {
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: "test"
+      }
+    });
   });
 
   afterEach(async () => {
     if (prisma) {
+      // Clean up all data to ensure test isolation
+      await prisma.product.deleteMany();
+      await prisma.profile.deleteMany();
+      await prisma.post.deleteMany();
+      await prisma.user.deleteMany();
       await prisma.$disconnect();
     }
   });

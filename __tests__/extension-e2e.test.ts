@@ -8,7 +8,13 @@ describe("Extension E2E Tests", () => {
 
   beforeAll(() => {
     // Reset the test database
-    execSync("npm run prisma:reset", { stdio: "inherit" });
+    execSync("npm run prisma:reset", {
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: "test"
+      }
+    });
   });
 
   beforeEach(async () => {
