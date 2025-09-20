@@ -1,6 +1,6 @@
-# Example: Complete Setup
+# How to use Prisma KSUID Extension
 
-This example shows a complete implementation using the KSUID middleware with multiple models.
+This example shows a complete implementation using the KSUID Extension.
 
 ## Project Structure
 
@@ -46,9 +46,11 @@ model Post {
 
 ## lib/db.ts
 
+### Using Prisma Client Extensions
+
 ```typescript
 import { PrismaClient } from "@prisma/client";
-import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
+import { createKsuidExtension } from "@owpz/prisma-ksuid";
 
 const prefixMap = {
   User: "usr_",
@@ -60,13 +62,11 @@ const prefixMap = {
 // Fallback for models not in prefixMap
 const prefixFn = (model: string) => model.slice(0, 2).toLowerCase() + "_";
 
-const prisma = new PrismaClient();
-
-prisma.$use(
-  createKsuidMiddleware({
+const prisma = new PrismaClient().$extends(
+  createKsuidExtension({
     prefixMap,
     prefixFn,
-  }) as Parameters<PrismaClient["$use"]>[0],
+  }),
 );
 
 export default prisma;
