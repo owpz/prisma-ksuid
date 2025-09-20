@@ -1,8 +1,13 @@
 name: Publish Package to npm
+
 on:
   push:
     tags:
       - "v*.*.*"
+
+permissions:
+  contents: read
+
 jobs:
   publish:
     name: Publish to npm
