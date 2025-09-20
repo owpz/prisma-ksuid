@@ -1,14 +1,43 @@
 import { generateKSUID } from "./util/ksuid";
 import { Prisma } from "@prisma/client/extension";
+import type {
+  JsInputValue,
+  ModelQueryOptionsCbArgs,
+} from "@prisma/client/runtime/library";
 
 type PrefixMap = Record<string, string>;
 type PrefixGenerator = (model: string) => string;
+type JsonLike = Record<string, unknown>;
 
 interface KsuidExtensionOptions {
   prefixMap: PrefixMap;
   prefixFn?: PrefixGenerator;
   processNestedCreates?: boolean;
 }
+
+const isJsonLike = (value: unknown): value is JsonLike =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isMissingId = (value: JsonLike): boolean => {
+  if (!("id" in value)) {
+    return true;
+  }
+
+  const idValue = value["id"];
+
+  if (idValue === undefined || idValue === null) {
+    return true;
+  }
+
+  if (typeof idValue === "string") {
+    return idValue.length === 0;
+  }
+
+  return false;
+};
+
+const withGeneratedId = (value: JsonLike, prefix: string): JsonLike =>
+  isMissingId(value) ? { ...value, id: generateKSUID(prefix) } : value;
 
 /**
  * Creates a Prisma Client extension that automatically generates KSUIDs for model IDs.
@@ -48,137 +77,147 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
     return prefix;
   };
 
+  const ensurePrefixForModel = (model: string): string => {
+    const prefix = getPrefix(model);
+
+    if (!prefix || prefix.length === 0) {
+      throw new Error(`Prefix not defined or invalid for model "${model}".`);
+    }
+
+    return prefix;
+  };
+
+  const inferModelNameFromRelation = (relationKey: string): string => {
+    if (!relationKey) {
+      return relationKey;
+    }
+
+    const capitalized =
+      relationKey.charAt(0).toUpperCase() + relationKey.slice(1);
+
+    if (capitalized.endsWith("ies") && capitalized.length > 3) {
+      return `${capitalized.slice(0, -3)}y`;
+    }
+
+    if (capitalized.endsWith("s") && capitalized.length > 1) {
+      return capitalized.slice(0, -1);
+    }
+
+    return capitalized;
+  };
+
+  const resolveNestedModelInfo = (relationKey: string) => {
+    let modelName = inferModelNameFromRelation(relationKey);
+
+    try {
+      return { modelName, prefix: ensurePrefixForModel(modelName) };
+    } catch (error) {
+      if (modelName === "Item") {
+        modelName = "OrderItem";
+        return { modelName, prefix: ensurePrefixForModel(modelName) };
+      }
+
+      throw error;
+    }
+  };
+
   /**
    * Recursively process nested create operations in data
    */
-  const processNestedCreates = (data: any, parentModel?: string): any => {
+  const processNestedCreates = (data: unknown): unknown => {
     if (!data || typeof data !== "object") {
       return data;
     }
 
     if (Array.isArray(data)) {
-      return data.map((item) => processNestedCreates(item, parentModel));
+      return data.map((item) => processNestedCreates(item));
     }
 
-    const processed = { ...data };
+    if (!isJsonLike(data)) {
+      return data;
+    }
 
-    // Look for nested create operations
+    const processed: JsonLike = { ...data };
+
     for (const [key, value] of Object.entries(processed)) {
-      if (value && typeof value === "object") {
-        // Check if this is a nested create operation
-        if ("create" in value && typeof value.create === "object") {
-          const nestedCreateData = value.create;
+      if (!value || typeof value !== "object") {
+        continue;
+      }
 
-          // Try to infer the model name from the key
-          let modelName = key.charAt(0).toUpperCase() + key.slice(1);
-          if (modelName.endsWith("s") && modelName.length > 1) {
-            modelName = modelName.slice(0, -1);
-          }
+      if (Array.isArray(value)) {
+        processed[key] = value.map((item) => processNestedCreates(item));
+        continue;
+      }
 
-          // First try the simple inference
-          let prefix = getPrefix(modelName);
+      if (!isJsonLike(value)) {
+        processed[key] = processNestedCreates(value);
+        continue;
+      }
 
-          // If no prefix found, try to find a model that ends with the inferred name
-          // This handles cases like "items" -> "OrderItem"
-          if (!prefix && modelName === "Item") {
-            // Check if there's an OrderItem model
-            const orderItemPrefix = getPrefix("OrderItem");
-            if (orderItemPrefix) {
-              modelName = "OrderItem";
-              prefix = orderItemPrefix;
+      if ("create" in value && typeof value.create === "object") {
+        const nestedCreateData = value.create;
+        const { prefix } = resolveNestedModelInfo(key);
+        const processedNestedData = processNestedCreates(nestedCreateData);
+
+        if (Array.isArray(processedNestedData)) {
+          const processedArray = processedNestedData.map((item) => {
+            if (isJsonLike(item)) {
+              return withGeneratedId(item, prefix);
             }
-          }
 
-          // For nested creates, we need a prefix or we throw an error
-          // (unless it's a model that genuinely doesn't need KSUID generation)
-          if (!prefix) {
-            // Check if this model has any prefix configured - if not, it might be intentional
-            // But if processNestedCreates is true and we're here, we should throw
-            throw new Error(
-              `Prefix not defined or invalid for model "${modelName}".`,
-            );
-          }
+            return item;
+          });
 
-          // Process the nested create data
-          const processedNestedData = processNestedCreates(
-            nestedCreateData,
-            modelName,
-          );
-
-          // Add KSUID if not present
-          if (Array.isArray(processedNestedData)) {
-            processedNestedData.forEach((item) => {
-              if (!item.id || item.id === "") {
-                item.id = generateKSUID(prefix);
-              }
-            });
-          } else if (
-            !processedNestedData.id ||
-            processedNestedData.id === ""
-          ) {
-            processedNestedData.id = generateKSUID(prefix);
-          }
-
+          processed[key] = { ...value, create: processedArray };
+        } else if (isJsonLike(processedNestedData)) {
+          processed[key] = {
+            ...value,
+            create: withGeneratedId(processedNestedData, prefix),
+          };
+        } else {
           processed[key] = { ...value, create: processedNestedData };
         }
-        // Check for createMany nested operations
-        else if (
-          "createMany" in value &&
-          value.createMany &&
-          typeof value.createMany === "object" &&
-          "data" in value.createMany
-        ) {
-          const nestedCreateManyData = value.createMany.data;
 
-          let modelName = key.charAt(0).toUpperCase() + key.slice(1);
-          if (modelName.endsWith("s") && modelName.length > 1) {
-            modelName = modelName.slice(0, -1);
-          }
+        continue;
+      }
 
-          // First try the simple inference
-          let prefix = getPrefix(modelName);
+      if (
+        "createMany" in value &&
+        value.createMany &&
+        typeof value.createMany === "object" &&
+        "data" in value.createMany
+      ) {
+        const nestedCreateManyData = value.createMany.data;
+        const { prefix } = resolveNestedModelInfo(key);
 
-          // If no prefix found, try to find a model that ends with the inferred name
-          // This handles cases like "items" -> "OrderItem"
-          if (!prefix && modelName === "Item") {
-            // Check if there's an OrderItem model
-            const orderItemPrefix = getPrefix("OrderItem");
-            if (orderItemPrefix) {
-              modelName = "OrderItem";
-              prefix = orderItemPrefix;
-            }
-          }
+        if (Array.isArray(nestedCreateManyData)) {
+          const processedData = nestedCreateManyData
+            .filter(
+              (item): item is unknown => item !== null && item !== undefined,
+            )
+            .map((item) => {
+              const processedItem = processNestedCreates(item);
 
-          // For nested creates, we need a prefix or we throw an error
-          if (!prefix) {
-            throw new Error(
-              `Prefix not defined or invalid for model "${modelName}".`,
-            );
-          }
-
-          if (Array.isArray(nestedCreateManyData)) {
-            const processedData = nestedCreateManyData.map((item) => {
-              const processedItem = processNestedCreates(item, modelName);
-              if (!processedItem.id || processedItem.id === "") {
-                processedItem.id = generateKSUID(prefix);
+              if (isJsonLike(processedItem)) {
+                return withGeneratedId(processedItem, prefix);
               }
+
               return processedItem;
             });
 
-            processed[key] = {
-              ...value,
-              createMany: {
-                ...value.createMany,
-                data: processedData,
-              },
-            };
-          }
+          processed[key] = {
+            ...value,
+            createMany: {
+              ...value.createMany,
+              data: processedData,
+            },
+          };
         }
-        // Recursively process other nested objects
-        else {
-          processed[key] = processNestedCreates(value, parentModel);
-        }
+
+        continue;
       }
+
+      processed[key] = processNestedCreates(value);
     }
 
     return processed;
@@ -188,69 +227,79 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
     name: "prisma-ksuid",
     query: {
       $allModels: {
-        async create({ model, args, query }: any) {
-          const prefix = getPrefix(model);
+        async create({ model, args, query }: ModelQueryOptionsCbArgs) {
+          const prefix = ensurePrefixForModel(model);
 
-          // Validate that we have a non-empty prefix for this model
-          if (!prefix || prefix.length === 0) {
-            throw new Error(
-              `Prefix not defined or invalid for model "${model}".`,
-            );
+          const currentData = args.data as JsInputValue | undefined;
+
+          if (currentData === undefined || currentData === null) {
+            return query(args);
           }
 
-          const data = args.data as Record<string, unknown>;
+          let createData: unknown = currentData;
 
-          // Only add an ID if data is an object and doesn't already have a meaningful ID
-          if (
-            typeof data === "object" &&
-            !Array.isArray(data) &&
-            (!data.id || data.id === "")
-          ) {
-            data.id = generateKSUID(prefix);
+          if (isJsonLike(createData)) {
+            createData = withGeneratedId(createData, prefix);
           }
 
           // Process nested creates if enabled
           if (shouldProcessNestedCreates) {
-            args.data = processNestedCreates(data, model);
+            createData = processNestedCreates(createData);
+
+            if (isJsonLike(createData)) {
+              createData = withGeneratedId(createData, prefix);
+            }
           }
 
+          args.data = createData as JsInputValue;
           return query(args);
         },
 
-        async createMany({ model, args, query }: any) {
-          const prefix = getPrefix(model);
+        async createMany({ model, args, query }: ModelQueryOptionsCbArgs) {
+          const prefix = ensurePrefixForModel(model);
 
-          // Validate that we have a non-empty prefix for this model
-          if (!prefix || prefix.length === 0) {
-            throw new Error(
-              `Prefix not defined or invalid for model "${model}".`,
-            );
+          const currentData = args.data as JsInputValue | undefined;
+
+          if (currentData === undefined || currentData === null) {
+            return query(args);
           }
 
-          if (Array.isArray(args.data)) {
+          if (Array.isArray(currentData)) {
             // Filter out null/undefined values and then process the remaining items
-            args.data = args.data
-              .filter((item: any) => item !== null && item !== undefined)
-              .map((item: any) => {
-                // Only add an ID if the item is an object and doesn't already have a meaningful ID
-                if (
-                  typeof item === "object" &&
-                  !Array.isArray(item) &&
-                  (!("id" in item) ||
-                    item.id === "" ||
-                    item.id === null ||
-                    item.id === undefined)
-                ) {
-                  (item as any).id = generateKSUID(prefix);
+            const processedItems = currentData
+              .filter((item) => item !== null && item !== undefined)
+              .map((item) => {
+                let normalized: unknown = item;
+
+                if (isJsonLike(normalized)) {
+                  normalized = withGeneratedId(normalized, prefix);
                 }
 
-                // Process nested creates in each item if enabled
-                if (shouldProcessNestedCreates) {
-                  return processNestedCreates(item, model);
+                if (!shouldProcessNestedCreates) {
+                  return normalized;
                 }
 
-                return item;
+                const processed = processNestedCreates(normalized);
+
+                if (isJsonLike(processed)) {
+                  return withGeneratedId(processed, prefix);
+                }
+
+                return processed;
               });
+
+            args.data = processedItems as JsInputValue;
+          }
+          // If data is not an array (unexpected), still respect nested processing flag
+          else if (shouldProcessNestedCreates) {
+            const processed = processNestedCreates(currentData);
+            args.data = (
+              isJsonLike(processed)
+                ? withGeneratedId(processed, prefix)
+                : processed
+            ) as JsInputValue;
+          } else {
+            args.data = currentData;
           }
 
           return query(args);

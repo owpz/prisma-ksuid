@@ -8,6 +8,7 @@
 A production-ready Prisma Client extension for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
 
 > **Important**:
+>
 > - **Requires Prisma 4.16.0+** - This is when the extension API (`$extends`) was introduced
 > - **For Prisma 6.14.0+** - The extension API is mandatory as middleware support (`$use`) was completely removed
 
@@ -62,6 +63,7 @@ For detailed KSUID documentation, see [@owpz/ksuid](https://github.com/owpz/ksui
 If you're upgrading from an older version that used `createKsuidMiddleware`:
 
 ### Before (Prisma < 6.14.0 with middleware)
+
 ```typescript
 import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
 
@@ -70,12 +72,11 @@ prisma.$use(createKsuidMiddleware({ prefixMap }));
 ```
 
 ### After (Prisma 4.16.0+ with extensions)
+
 ```typescript
 import { createKsuidExtension } from "@owpz/prisma-ksuid";
 
-const prisma = new PrismaClient().$extends(
-  createKsuidExtension({ prefixMap })
-);
+const prisma = new PrismaClient().$extends(createKsuidExtension({ prefixMap }));
 ```
 
 > **Note**: `createKsuidMiddleware` is still exported for backward compatibility but will show a deprecation warning. It won't work with Prisma 6.14.0+ since `$use` has been removed.
