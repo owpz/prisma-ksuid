@@ -120,6 +120,60 @@ const prisma = new PrismaClient().$extends(
 );
 ```
 
+### With custom primary key fields
+
+```typescript
+// For models using different primary key field names
+const prisma = new PrismaClient().$extends(
+  createKsuidExtension({
+    prefixMap: {
+      User: "usr_",
+      Session: "sess_",
+    },
+    primaryKeyField: (model) => {
+      // Session model uses 'token' as primary key
+      if (model === "Session") return "token";
+      // Others use default 'id'
+      return "id";
+    },
+  }),
+);
+```
+
+### Working with upserts
+
+```typescript
+// The extension generates KSUIDs for the create portion of upserts
+const user = await prisma.user.upsert({
+  where: { email: "user@example.com" },
+  update: { name: "Updated Name" },
+  create: {
+    email: "user@example.com",
+    name: "New User",
+    // ID will be generated with usr_ prefix
+  },
+});
+```
+
+### Using createManyAndReturn (Prisma 6+)
+
+```typescript
+// Create multiple records and get them back with generated IDs
+const users = await prisma.user.createManyAndReturn({
+  data: [
+    { email: "user1@example.com", name: "User 1" },
+    { email: "user2@example.com", name: "User 2" },
+    // IDs will be generated with usr_ prefix
+  ],
+});
+
+console.log(users);
+// [
+//   { id: 'usr_2KjMLq...', email: 'user1@example.com', ... },
+//   { id: 'usr_2KjMLr...', email: 'user2@example.com', ... }
+// ]
+```
+
 ### Using the KSUID generator directly
 
 > **⚠️ DEPRECATED**: Direct usage of `generateKSUID` from this package is deprecated and will be removed in version v25.8 or greater. Use [@owpz/ksuid](https://github.com/owpz/ksuid) directly for standalone KSUID generation.
@@ -146,10 +200,14 @@ This extension supports all Prisma operations that create new records:
 - ✅ **Basic creates**: `prisma.user.create()`
 - ✅ **Nested creates**: Creating related records in a single operation
 - ✅ **Batch creates**: `prisma.user.createMany()`
-- ✅ **Upsert operations**: `prisma.user.upsert()` (on create)
+- ✅ **Batch creates with return**: `prisma.user.createManyAndReturn()` (Prisma 6+)
+- ✅ **Upsert operations**: `prisma.user.upsert()` (generates ID for create portion)
+- ✅ **Nested upserts**: Handles nested `upsert` in relations
 - ✅ **Connect or create**: Nested `connectOrCreate` operations
 - ✅ **Transaction support**: Works within `prisma.$transaction()`
 - ✅ **Flexible prefixing**: Map-based or function-based prefix generation
+- ✅ **Custom primary keys**: Support for non-`id` fields and composite keys
+- ✅ **DMMF metadata**: Uses Prisma's metadata for accurate relation resolution
 - ✅ **Type safety**: Full TypeScript support with proper typing
 
 ## Limitations
@@ -171,9 +229,13 @@ Creates a Prisma Client extension that automatically generates KSUIDs for models
 #### Parameters
 
 - `options`: Object with the following properties:
-  - `prefixMap`: An object mapping model names to prefix strings
+  - `prefixMap`: An object mapping model names to prefix strings (required)
   - `prefixFn` (optional): A function that generates a prefix based on the model name, used as fallback when a model is not found in the prefixMap
   - `processNestedCreates` (optional): Boolean to enable/disable processing of nested create operations (default: true)
+  - `primaryKeyField` (optional): String or function specifying the primary key field name. Can be:
+    - A string (e.g., `"id"`, `"uuid"`) applied to all models
+    - A function `(model: string) => string` that returns the field name for each model
+    - Defaults to `"id"`
 
 #### Returns
 
