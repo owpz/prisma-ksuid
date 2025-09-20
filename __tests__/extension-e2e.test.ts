@@ -136,6 +136,9 @@ describe("Extension E2E Tests", () => {
         orderBy: { email: "asc" },
       });
 
+      // Check if we got the expected number of users
+      expect(users).toHaveLength(50);
+
       const ids = new Set<string>();
       users.forEach((user) => {
         expect(user.id).toMatch(/^usr_[a-zA-Z0-9]{27}$/);
@@ -143,7 +146,7 @@ describe("Extension E2E Tests", () => {
       });
 
       // All IDs should be unique
-      expect(ids.size).toBe(50);
+      expect(ids.size).toBe(users.length);
     });
 
     test("handles mixed model types in transaction", async () => {
