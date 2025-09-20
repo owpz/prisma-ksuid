@@ -31,9 +31,9 @@ let middlewareWarned = false;
 export function createKsuidMiddleware(options: Parameters<typeof createKsuidExtension>[0]) {
   if (!middlewareWarned) {
     console.warn(
-      "⚠️ createKsuidMiddleware is deprecated and will not work with Prisma 6.14.0+\n" +
+      "⚠️ createKsuidMiddleware is deprecated and will NOT work with Prisma 6.14.0+\n" +
       "Prisma removed middleware support ($use) in v6.14.0.\n" +
-      "Please migrate to createKsuidExtension with $extends:\n\n" +
+      "Please migrate to createKsuidExtension (available since Prisma 4.16.0):\n\n" +
       "const prisma = new PrismaClient().$extends(\n" +
       "  createKsuidExtension({ prefixMap: { User: 'usr_' } })\n" +
       ");\n\n" +
@@ -48,7 +48,8 @@ export function createKsuidMiddleware(options: Parameters<typeof createKsuidExte
 
 /**
  * Creates a Prisma Client extension that automatically generates KSUIDs for model IDs.
- * Required for Prisma 6.14.0+ where middleware was removed.
+ * Compatible with Prisma 4.16.0+ (when extensions were introduced).
+ * Required for Prisma 6.14.0+ (when middleware was removed).
  *
  * The extension applies to `create` and `createMany` operations, generating
  * prefixed KSUIDs based on model names.
