@@ -616,8 +616,8 @@ describe("Extension Integration Tests", () => {
         });
         orders.push(order);
 
-        // Wait to ensure different timestamps
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        // Wait to ensure different timestamps (>1 second for guaranteed different timestamps)
+        await new Promise((resolve) => setTimeout(resolve, 1100));
       }
 
       // Extract KSUIDs and verify chronological ordering

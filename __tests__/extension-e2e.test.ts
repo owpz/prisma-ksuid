@@ -317,8 +317,8 @@ describe("Extension E2E Tests", () => {
           },
         });
         users.push(user);
-        // Small delay to ensure different KSUID timestamps
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        // Delay to ensure different KSUID timestamps (>1 second for guaranteed different timestamps)
+        await new Promise((resolve) => setTimeout(resolve, 1100));
       }
 
       // IDs should be in chronological order when sorted
