@@ -7,7 +7,7 @@
 
 A production-ready Prisma Client extension for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
 
-> **Important**: Requires Prisma 4.16.0 or later. For Prisma 6.14.0+, this extension is mandatory as middleware support has been removed.
+> **Important**: Requires Prisma 6.14.0 or later. Prisma removed middleware support (`$use`) in version 6.14.0, making the extension API the only way to use this package.
 
 ## What is a KSUID?
 

@@ -13,7 +13,7 @@
 
 /**
  * Creates a Prisma Client extension that automatically generates KSUIDs for model IDs.
- * Compatible with Prisma 4.16.0+ (required for Prisma 6.14.0+ where middleware was removed).
+ * Required for Prisma 6.14.0+ where middleware was removed.
  *
  * The extension applies to `create` and `createMany` operations, generating
  * prefixed KSUIDs based on model names.
