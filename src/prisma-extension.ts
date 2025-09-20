@@ -1,5 +1,5 @@
 import { generateKSUID } from "./util/ksuid";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client/extension";
 
 type PrefixMap = Record<string, string>;
 type PrefixGenerator = (model: string) => string;
@@ -147,7 +147,7 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
     name: "prisma-ksuid",
     query: {
       $allModels: {
-        async create({ model, args, query }) {
+        async create({ model, args, query }: any) {
           const prefix = getPrefix(model);
 
           // Validate that we have a non-empty prefix for this model
@@ -176,7 +176,7 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
           return query(args);
         },
 
-        async createMany({ model, args, query }) {
+        async createMany({ model, args, query }: any) {
           const prefix = getPrefix(model);
 
           // Validate that we have a non-empty prefix for this model
@@ -187,7 +187,7 @@ export const createKsuidExtension = (options: KsuidExtensionOptions) => {
           }
 
           if (Array.isArray(args.data)) {
-            args.data = args.data.map((item) => {
+            args.data = args.data.map((item: any) => {
               // Only add an ID if the item is an object, not null/undefined, and doesn't already have a meaningful ID
               if (
                 item &&
