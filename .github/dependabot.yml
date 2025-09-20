@@ -1,0 +1,51 @@
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    # Allow up to 10 open pull requests for npm dependencies
+    open-pull-requests-limit: 10
+    # Dependency updates configuration
+    versioning-strategy: "increase"
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Group dependency updates to reduce PR noise
+    groups:
+      dev-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "development"
+      production-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production"
+    # Ignore specific dependencies if needed
+    ignore:
+      # Example: - dependency-name: "express"
+      #            versions: ["4.x", "5.x"]
+      []
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore"
+      include: "scope"

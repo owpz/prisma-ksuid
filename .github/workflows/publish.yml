@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write  # Required for npm provenance
 
 jobs:
   publish:
@@ -46,6 +47,9 @@ jobs:
       # Install dependencies
       - name: Install dependencies
         run: npm ci
+      # Security audit before publishing
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
       # Run prepublishOnly script (clean, build, test)
       - name: Prepare package
         run: npm run prepublishOnly
@@ -61,8 +65,8 @@ jobs:
             exit 1
           fi
           echo "✓ Build output verification successful"
-      # Publish to npm
+      # Publish to npm with provenance
       - name: Publish package to npm
-        run: npm publish --access public
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
