@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   test:
     name: Test with Node ${{ matrix.node-version }}
@@ -25,9 +29,14 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
 
-      # Install dependencies
+      # Install dependencies (with scripts disabled for security)
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
+
+      # Run security audit
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: false
 
       # Generate Prisma client
       - name: Generate Prisma client
