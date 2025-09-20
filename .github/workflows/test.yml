@@ -38,6 +38,10 @@ jobs:
         run: npm audit --audit-level=moderate
         continue-on-error: false
 
+      # Lint source files
+      - name: Run lint
+        run: npm run lint
+
       # Generate Prisma client
       - name: Generate Prisma client
         run: npm run prisma:generate

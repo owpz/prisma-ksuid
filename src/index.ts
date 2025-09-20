@@ -28,16 +28,18 @@ import { createKsuidExtension } from "./prisma-extension";
 
 let middlewareWarned = false;
 
-export function createKsuidMiddleware(options: Parameters<typeof createKsuidExtension>[0]) {
+export function createKsuidMiddleware(
+  options: Parameters<typeof createKsuidExtension>[0],
+) {
   if (!middlewareWarned) {
     console.warn(
       "⚠️ createKsuidMiddleware is deprecated and will NOT work with Prisma 6.14.0+\n" +
-      "Prisma removed middleware support ($use) in v6.14.0.\n" +
-      "Please migrate to createKsuidExtension (available since Prisma 4.16.0):\n\n" +
-      "const prisma = new PrismaClient().$extends(\n" +
-      "  createKsuidExtension({ prefixMap: { User: 'usr_' } })\n" +
-      ");\n\n" +
-      "See migration guide: https://github.com/owpz/prisma-ksuid#migration-from-middleware"
+        "Prisma removed middleware support ($use) in v6.14.0.\n" +
+        "Please migrate to createKsuidExtension (available since Prisma 4.16.0):\n\n" +
+        "const prisma = new PrismaClient().$extends(\n" +
+        "  createKsuidExtension({ prefixMap: { User: 'usr_' } })\n" +
+        ");\n\n" +
+        "See migration guide: https://github.com/owpz/prisma-ksuid#migration-from-middleware",
     );
     middlewareWarned = true;
   }

@@ -1,4 +1,8 @@
-import { generateKSUID, createKsuidExtension, createKsuidMiddleware } from "../src";
+import {
+  generateKSUID,
+  createKsuidExtension,
+  createKsuidMiddleware,
+} from "../src";
 
 describe("Index Exports", () => {
   test("exports generateKSUID function correctly", () => {
@@ -38,7 +42,7 @@ describe("Index Exports", () => {
 
     // Verify deprecation warning was shown
     expect(console.warn).toHaveBeenCalledWith(
-      expect.stringContaining("createKsuidMiddleware is deprecated")
+      expect.stringContaining("createKsuidMiddleware is deprecated"),
     );
 
     // Restore console.warn

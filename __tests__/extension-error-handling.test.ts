@@ -11,8 +11,8 @@ describe("Extension Error Handling", () => {
       stdio: "inherit",
       env: {
         ...process.env,
-        PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: "test"
-      }
+        PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: "test",
+      },
     });
   });
 
