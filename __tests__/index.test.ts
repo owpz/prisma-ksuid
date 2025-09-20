@@ -1,4 +1,4 @@
-import { generateKSUID, createKsuidExtension } from "../src";
+import { generateKSUID, createKsuidExtension, createKsuidMiddleware } from "../src";
 
 describe("Index Exports", () => {
   test("exports generateKSUID function correctly", () => {
@@ -20,6 +20,29 @@ describe("Index Exports", () => {
       prefixMap: { User: "usr_" },
     });
     expect(typeof extension).toBe("function");
+  });
+
+  test("createKsuidMiddleware exists for backward compatibility", () => {
+    // Suppress console.warn for this test
+    const originalWarn = console.warn;
+    console.warn = jest.fn();
+
+    expect(createKsuidMiddleware).toBeDefined();
+    expect(typeof createKsuidMiddleware).toBe("function");
+
+    // Verify it returns an extension (same as createKsuidExtension)
+    const result = createKsuidMiddleware({
+      prefixMap: { User: "usr_" },
+    });
+    expect(typeof result).toBe("function");
+
+    // Verify deprecation warning was shown
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining("createKsuidMiddleware is deprecated")
+    );
+
+    // Restore console.warn
+    console.warn = originalWarn;
   });
 
   test("createKsuidExtension supports enhanced features", () => {

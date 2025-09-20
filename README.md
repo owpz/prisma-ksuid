@@ -55,6 +55,29 @@ For detailed KSUID documentation, see [@owpz/ksuid](https://github.com/owpz/ksui
    );
    ```
 
+## Migration from Middleware
+
+If you're upgrading from an older version that used `createKsuidMiddleware`:
+
+### Before (Pre-Prisma 6.14.0)
+```typescript
+import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
+
+const prisma = new PrismaClient();
+prisma.$use(createKsuidMiddleware({ prefixMap }));
+```
+
+### After (Prisma 6.14.0+)
+```typescript
+import { createKsuidExtension } from "@owpz/prisma-ksuid";
+
+const prisma = new PrismaClient().$extends(
+  createKsuidExtension({ prefixMap })
+);
+```
+
+> **Note**: `createKsuidMiddleware` is still exported for backward compatibility but will show a deprecation warning. It won't work with Prisma 6.14.0+ since `$use` has been removed.
+
 ## Advanced Usage
 
 ### Multiple models with prefixes
