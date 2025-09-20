@@ -5,7 +5,9 @@
 
 # @owpz/prisma-ksuid
 
-A production-ready Prisma middleware for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
+A production-ready Prisma Client extension for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
+
+> **Important**: Requires Prisma 4.16.0 or later. For Prisma 6.14.0+, this extension is mandatory as middleware support has been removed.
 
 ## What is a KSUID?
 
@@ -40,7 +42,7 @@ For detailed KSUID documentation, see [@owpz/ksuid](https://github.com/owpz/ksui
    }
    ```
 
-3. **Configure the extension (Recommended for Prisma 4.16.0+):**
+3. **Configure the extension:**
 
    ```typescript
    import { PrismaClient } from "@prisma/client";
@@ -50,21 +52,6 @@ For detailed KSUID documentation, see [@owpz/ksuid](https://github.com/owpz/ksui
      createKsuidExtension({
        prefixMap: { User: "usr_" },
      }),
-   );
-   ```
-
-   Or using the legacy middleware approach (deprecated):
-
-   ```typescript
-   import { PrismaClient } from "@prisma/client";
-   import { createKsuidMiddleware } from "@owpz/prisma-ksuid";
-
-   const prisma = new PrismaClient();
-
-   prisma.$use(
-     createKsuidMiddleware({
-       prefixMap: { User: "usr_" },
-     }) as Parameters<PrismaClient["$use"]>[0],
    );
    ```
 
@@ -128,7 +115,7 @@ console.log(id); // 1xGVYLMNZO2PfHqPnRlwu5NFNMB
 
 ## Features
 
-This middleware supports all Prisma operations that create new records:
+This extension supports all Prisma operations that create new records:
 
 - ✅ **Basic creates**: `prisma.user.create()`
 - ✅ **Nested creates**: Creating related records in a single operation
@@ -141,30 +128,30 @@ This middleware supports all Prisma operations that create new records:
 
 ## Limitations
 
-Due to Prisma middleware constraints, this library **cannot** handle:
+Due to Prisma extension constraints, this library **cannot** handle:
 
-- ❌ **Raw queries**: `prisma.$executeRaw()` and `prisma.$queryRaw()` bypass middleware
+- ❌ **Raw queries**: `prisma.$executeRaw()` and `prisma.$queryRaw()` bypass extensions
 - ❌ **Database-level operations**: Direct SQL INSERTs, stored procedures, or triggers
-- ❌ **Client extensions**: Cannot be combined with Prisma Client extensions that modify create behavior
 - ❌ **Schema-level defaults**: Cannot override `@default(cuid())` or `@default(uuid())` in schema
 - ❌ **External inserts**: Records created outside of Prisma Client (e.g., database admin tools)
 - ❌ **Retroactive ID generation**: Cannot generate KSUIDs for existing records
 
 ## API Reference
 
-### `createKsuidMiddleware(options)`
+### `createKsuidExtension(options)`
 
-Creates a Prisma middleware that automatically generates KSUIDs for models during create operations.
+Creates a Prisma Client extension that automatically generates KSUIDs for models during create operations.
 
 #### Parameters
 
 - `options`: Object with the following properties:
   - `prefixMap`: An object mapping model names to prefix strings
   - `prefixFn` (optional): A function that generates a prefix based on the model name, used as fallback when a model is not found in the prefixMap
+  - `processNestedCreates` (optional): Boolean to enable/disable processing of nested create operations (default: true)
 
 #### Returns
 
-A Prisma middleware function that can be used with `prisma.$use()`.
+A Prisma extension function that can be used with `prisma.$extends()`.
 
 ### `generateKSUID(prefix?)` ⚠️ DEPRECATED
 
@@ -182,7 +169,7 @@ A string containing the generated KSUID with the optional prefix.
 
 ## 🔌 Database Integration
 
-This middleware integrates seamlessly with Prisma's ecosystem:
+This extension integrates seamlessly with Prisma's ecosystem:
 
 ### **Core Prisma Features**
 

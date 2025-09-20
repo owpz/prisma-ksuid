@@ -1,5 +1,4 @@
-import { generateKSUID } from "../src";
-import { createKsuidMiddleware } from "../src";
+import { generateKSUID, createKsuidExtension } from "../src";
 
 describe("Index Exports", () => {
   test("exports generateKSUID function correctly", () => {
@@ -12,32 +11,37 @@ describe("Index Exports", () => {
     expect(ksuid.length).toBe(27);
   });
 
-  test("exports createKsuidMiddleware function correctly", () => {
-    expect(createKsuidMiddleware).toBeDefined();
-    expect(typeof createKsuidMiddleware).toBe("function");
-
-    // Now it should be the enhanced middleware
-    expect(createKsuidMiddleware).toBe(createKsuidMiddleware);
+  test("exports createKsuidExtension function correctly", () => {
+    expect(createKsuidExtension).toBeDefined();
+    expect(typeof createKsuidExtension).toBe("function");
 
     // Verify function accepts proper parameters
-    const middleware = createKsuidMiddleware({
+    const extension = createKsuidExtension({
       prefixMap: { User: "usr_" },
     });
-    expect(typeof middleware).toBe("function");
+    expect(typeof extension).toBe("function");
   });
 
-  test("createKsuidMiddleware supports enhanced features", () => {
+  test("createKsuidExtension supports enhanced features", () => {
     // Test that it accepts the processNestedCreates option
-    const middleware = createKsuidMiddleware({
+    const extension = createKsuidExtension({
       prefixMap: { User: "usr_", Profile: "prof_" },
       processNestedCreates: true,
     });
-    expect(typeof middleware).toBe("function");
+    expect(typeof extension).toBe("function");
 
-    // Test backwards compatibility - should work without processNestedCreates
-    const legacyMiddleware = createKsuidMiddleware({
+    // Test with processNestedCreates disabled
+    const extensionNoNested = createKsuidExtension({
       prefixMap: { User: "usr_" },
+      processNestedCreates: false,
     });
-    expect(typeof legacyMiddleware).toBe("function");
+    expect(typeof extensionNoNested).toBe("function");
+
+    // Test with prefixFn
+    const extensionWithFn = createKsuidExtension({
+      prefixMap: { User: "usr_" },
+      prefixFn: (model) => `${model.toLowerCase()}_`,
+    });
+    expect(typeof extensionWithFn).toBe("function");
   });
 });
