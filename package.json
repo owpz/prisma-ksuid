@@ -17,6 +17,7 @@
     "test": "npm run prisma:generate && jest",
     "test:watch": "jest --watch",
     "test:e2e": "jest __tests__/extension-e2e.test.ts",
+    "test:fuzz": "jest __tests__/fuzz.test.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:reset": "prisma db push --force-reset"
@@ -33,6 +34,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^18.0.0",
     "eslint": "^9.25.1",
+    "fast-check": "4.3.0",
     "jest": "^29.7.0",
     "prisma": "6.16.2",
     "sqlite3": "^5.1.7",
