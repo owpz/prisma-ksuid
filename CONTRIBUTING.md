@@ -8,17 +8,17 @@ You can obtain prisma-ksuid through the following methods:
 
 ### Via npm
 ```bash
-npm install prisma-ksuid
+npm install @owpz/prisma-ksuid
 ```
 
 ### Via yarn
 ```bash
-yarn add prisma-ksuid
+yarn add @owpz/prisma-ksuid
 ```
 
 ### Via pnpm
 ```bash
-pnpm add prisma-ksuid
+pnpm add @owpz/prisma-ksuid
 ```
 
 ### From Source
@@ -95,6 +95,12 @@ All contributions must meet these requirements to be accepted:
 
 #### Code Standards
 - **TypeScript**: All code must be written in TypeScript with proper type annotations
+- **Code Formatting**: All code must be formatted using Prettier
+  - Run `npm run format` or `npx prettier --write .` before committing
+  - Code style is automatically enforced via Prettier configuration
+- **Linting**: All ESLint checks must pass with no errors or warnings
+  - Run `npm run lint` to check for linting issues
+  - Fix any linting errors before submitting your PR
 - **Testing**: New features must include comprehensive tests
 - **Documentation**: Update README.md and inline documentation as needed
 - **Code Style**: Follow the existing code formatting and conventions
@@ -104,11 +110,31 @@ All contributions must meet these requirements to be accepted:
   - Keep files focused and modular
 
 #### Pull Request Requirements
-1. **Pass all CI checks** - All automated tests and linting must pass
+1. **Pass all CI checks** - All automated tests, linting, and security checks must pass:
+   - Unit tests and integration tests
+   - ESLint checks (no errors or warnings)
+   - Prettier formatting verification
+   - SAST (Static Application Security Testing) checks
+   - Code Fuzzing checks
+   - TypeScript type checking
 2. **Include tests** - Test coverage must not decrease
 3. **Clean commit history** - Use descriptive commit messages
 4. **Reference issues** - Link related issues with "Fixes #123"
 5. **Up-to-date** - Rebase on latest main branch before submitting
+
+#### Draft Pull Requests
+
+If your contribution is not yet ready for review, you can open a **Draft Pull Request**:
+- This allows you to run GitHub Actions CI checks early
+- You can see and fix any failing tests, linting issues, or security concerns
+- SAST and Code Fuzzing checks will run automatically
+- Convert to "Ready for Review" once all checks pass
+
+To create a draft PR:
+1. Open your pull request as usual
+2. Select "Create draft pull request" from the dropdown
+3. Work on resolving any CI failures
+4. Click "Ready for review" when complete
 
 #### Development Setup
 ```bash
@@ -128,8 +154,14 @@ npm run build
 # Check types (if available)
 npm run type-check
 
-# Run linter (if available)
+# Run linter
 npm run lint
+
+# Format code with Prettier
+npm run format
+
+# Check formatting without changing files
+npm run format:check
 ```
 
 ### Commit Message Format
