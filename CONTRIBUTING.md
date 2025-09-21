@@ -53,28 +53,64 @@ For feature requests or enhancement suggestions, please [create a new issue](htt
 
 ## Contributing Code
 
-We appreciate code contributions! Here's how you can contribute:
+We appreciate code contributions! All contributions to prisma-ksuid are made through **Pull Requests** on GitHub.
 
-### Getting Started
-1. Fork the repository on GitHub
-2. Clone your fork locally
-3. Create a new branch for your feature or fix
-4. Make your changes
-5. Write or update tests as needed
-6. Ensure all tests pass
-7. Commit your changes with clear, descriptive messages
-8. Push your branch to your fork
-9. Submit a pull request to the main repository
+### Contribution Process
 
-### Pull Request Process
-1. Ensure your code follows the existing code style
-2. Update documentation if you're changing functionality
-3. Add tests for new features
-4. Ensure all tests pass locally
-5. Update the README.md if needed
-6. Your pull request will be reviewed by maintainers
+Our contribution process uses GitHub Pull Requests:
 
-### Development Setup
+1. **Fork** the repository on GitHub at https://github.com/owpz/prisma-ksuid
+2. **Clone** your fork locally:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/prisma-ksuid.git
+   cd prisma-ksuid
+   ```
+3. **Create a new branch** for your feature or fix:
+   ```bash
+   git checkout -b feature/your-feature-name
+   # or
+   git checkout -b fix/your-bug-fix
+   ```
+4. **Make your changes** following our coding standards (see Requirements below)
+5. **Write or update tests** to cover your changes
+6. **Run tests** to ensure everything passes:
+   ```bash
+   npm test
+   ```
+7. **Commit your changes** with clear, descriptive messages:
+   ```bash
+   git commit -m "feat: add support for custom ID generation"
+   # or
+   git commit -m "fix: resolve KSUID collision issue"
+   ```
+8. **Push your branch** to your fork:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+9. **Submit a Pull Request** to the `main` branch at https://github.com/owpz/prisma-ksuid/pulls
+
+### Contribution Requirements
+
+All contributions must meet these requirements to be accepted:
+
+#### Code Standards
+- **TypeScript**: All code must be written in TypeScript with proper type annotations
+- **Testing**: New features must include comprehensive tests
+- **Documentation**: Update README.md and inline documentation as needed
+- **Code Style**: Follow the existing code formatting and conventions
+  - Use camelCase for variables and functions
+  - Use PascalCase for types and classes
+  - Add JSDoc comments for public APIs
+  - Keep files focused and modular
+
+#### Pull Request Requirements
+1. **Pass all CI checks** - All automated tests and linting must pass
+2. **Include tests** - Test coverage must not decrease
+3. **Clean commit history** - Use descriptive commit messages
+4. **Reference issues** - Link related issues with "Fixes #123"
+5. **Up-to-date** - Rebase on latest main branch before submitting
+
+#### Development Setup
 ```bash
 # Clone your fork
 git clone https://github.com/YOUR_USERNAME/prisma-ksuid.git
@@ -88,13 +124,25 @@ npm test
 
 # Build the project
 npm run build
+
+# Check types (if available)
+npm run type-check
+
+# Run linter (if available)
+npm run lint
 ```
 
-### Code Style
-- Follow the existing code formatting and conventions
-- Use meaningful variable and function names
-- Add comments for complex logic
-- Keep commits focused and atomic
+### Commit Message Format
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `refactor`: Code refactoring
+- `test`: Test additions or changes
+- `chore`: Build process or auxiliary changes
+
+Example: `feat: add support for composite primary keys`
 
 ## Questions and Discussions
 

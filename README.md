@@ -7,6 +7,13 @@
 
 A production-ready Prisma Client extension for generating K-Sortable Unique IDs (KSUIDs) as primary keys in your database models. Built on [@owpz/ksuid](https://github.com/owpz/ksuid) for 100% Go compatibility and high performance.
 
+## 📋 Project Links
+
+- **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute, report issues, and submit pull requests
+- **[Security Policy](SECURITY.md)** - How to report security vulnerabilities
+- **[GitHub Issues](https://github.com/owpz/prisma-ksuid/issues)** - Report bugs or request features
+- **[NPM Package](https://www.npmjs.com/package/@owpz/prisma-ksuid)** - Install the package
+
 > **Important**:
 >
 > - **Requires Prisma 4.16.0+** - This is when the extension API (`$extends`) was introduced
@@ -228,18 +235,114 @@ Creates a Prisma Client extension that automatically generates KSUIDs for models
 
 #### Parameters
 
-- `options`: Object with the following properties:
-  - `prefixMap`: An object mapping model names to prefix strings (required)
-  - `prefixFn` (optional): A function that generates a prefix based on the model name, used as fallback when a model is not found in the prefixMap
-  - `processNestedCreates` (optional): Boolean to enable/disable processing of nested create operations (default: true)
-  - `primaryKeyField` (optional): String or function specifying the primary key field name. Can be:
-    - A string (e.g., `"id"`, `"uuid"`) applied to all models
-    - A function `(model: string) => string` that returns the field name for each model
-    - Defaults to `"id"`
+- `options` (object, required): Configuration object with the following properties:
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `prefixMap` | `Record<string, string>` | Yes | - | Object mapping model names to their prefix strings |
+| `prefixFn` | `(model: string) => string` | No | `undefined` | Fallback function to generate prefixes for models not in prefixMap |
+| `processNestedCreates` | `boolean` | No | `true` | Enable/disable processing of nested create operations |
+| `primaryKeyField` | `string \| ((model: string) => string)` | No | `"id"` | Specify the primary key field name per model |
 
 #### Returns
 
-A Prisma extension function that can be used with `prisma.$extends()`.
+Returns a Prisma extension function compatible with `prisma.$extends()`.
+
+#### Example Usage
+
+```typescript
+import { PrismaClient } from "@prisma/client";
+import { createKsuidExtension } from "@owpz/prisma-ksuid";
+
+const prisma = new PrismaClient().$extends(
+  createKsuidExtension({
+    prefixMap: {
+      User: "usr_",
+      Post: "post_",
+      Comment: "cmt_"
+    },
+    prefixFn: (model) => model.slice(0, 3).toLowerCase() + "_",
+    processNestedCreates: true,
+    primaryKeyField: "id"
+  })
+);
+```
+
+### Supported Operations
+
+The extension automatically generates KSUIDs for the following Prisma operations:
+
+#### Basic Operations
+
+- **`create`**: Creates a single record with generated KSUID
+  ```typescript
+  const user = await prisma.user.create({
+    data: { email: "user@example.com", name: "John Doe" }
+  });
+  // Returns: { id: "usr_2KjMLq...", email: "...", name: "..." }
+  ```
+
+- **`createMany`**: Creates multiple records with generated KSUIDs
+  ```typescript
+  await prisma.user.createMany({
+    data: [
+      { email: "user1@example.com", name: "User 1" },
+      { email: "user2@example.com", name: "User 2" }
+    ]
+  });
+  ```
+
+- **`createManyAndReturn`** (Prisma 6+): Creates multiple records and returns them
+  ```typescript
+  const users = await prisma.user.createManyAndReturn({
+    data: [
+      { email: "user1@example.com", name: "User 1" },
+      { email: "user2@example.com", name: "User 2" }
+    ]
+  });
+  // Returns array of created users with generated IDs
+  ```
+
+#### Advanced Operations
+
+- **`upsert`**: Creates with KSUID if record doesn't exist
+  ```typescript
+  const user = await prisma.user.upsert({
+    where: { email: "user@example.com" },
+    update: { name: "Updated Name" },
+    create: { email: "user@example.com", name: "New User" }
+  });
+  ```
+
+- **Nested Creates**: Generates KSUIDs for related records
+  ```typescript
+  const user = await prisma.user.create({
+    data: {
+      email: "user@example.com",
+      posts: {
+        create: [
+          { title: "First Post" },  // Gets post_ prefix
+          { title: "Second Post" }   // Gets post_ prefix
+        ]
+      }
+    }
+  });
+  ```
+
+- **Connect or Create**: Generates KSUID for create portion
+  ```typescript
+  const post = await prisma.post.create({
+    data: {
+      title: "New Post",
+      author: {
+        connectOrCreate: {
+          where: { email: "user@example.com" },
+          create: { email: "user@example.com", name: "New User" }
+        }
+      }
+    }
+  });
+  ```
 
 ### `generateKSUID(prefix?)` ⚠️ DEPRECATED
 
@@ -249,11 +352,23 @@ Generates a K-Sortable Unique ID (KSUID).
 
 #### Parameters
 
-- `prefix` (optional): A string prefix to add to the generated KSUID. Default is an empty string.
+- `prefix` (string, optional): A string prefix to add to the generated KSUID. Default is an empty string.
 
 #### Returns
 
-A string containing the generated KSUID with the optional prefix.
+Returns a string containing the generated KSUID with the optional prefix.
+
+#### Migration Guide
+
+```typescript
+// ❌ Old way (deprecated)
+import { generateKSUID } from "@owpz/prisma-ksuid";
+const id = generateKSUID("usr_");
+
+// ✅ New way (recommended)
+import { KSUID } from "@owpz/ksuid";
+const id = "usr_" + KSUID.random().toString();
+```
 
 ## 🔌 Database Integration
 
