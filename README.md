@@ -181,51 +181,34 @@ console.log(users);
 // ]
 ```
 
-### Using the KSUID generator directly
-
-> **⚠️ DEPRECATED**: Direct usage of `generateKSUID` from this package is deprecated and will be removed in version v25.8 or greater. Use [@owpz/ksuid](https://github.com/owpz/ksuid) directly for standalone KSUID generation.
-
-```typescript
-// ❌ Deprecated - will be removed in future versions
-import { generateKSUID } from "@owpz/prisma-ksuid";
-
-// ✅ Recommended - use the core library instead
-import { KSUID } from "@owpz/ksuid";
-
-// Generate KSUIDs with the core library
-const userId = "usr_" + KSUID.random().toString();
-console.log(userId); // usr_1xGVYLMNZO2PfHqPnRlwu5NFNMB
-
-const id = KSUID.random().toString();
-console.log(id); // 1xGVYLMNZO2PfHqPnRlwu5NFNMB
-```
+ 
 
 ## Features
 
 This extension supports all Prisma operations that create new records:
 
-- ✅ **Basic creates**: `prisma.user.create()`
-- ✅ **Nested creates**: Creating related records in a single operation
-- ✅ **Batch creates**: `prisma.user.createMany()`
-- ✅ **Batch creates with return**: `prisma.user.createManyAndReturn()` (Prisma 6+)
-- ✅ **Upsert operations**: `prisma.user.upsert()` (generates ID for create portion)
-- ✅ **Nested upserts**: Handles nested `upsert` in relations
-- ✅ **Connect or create**: Nested `connectOrCreate` operations
-- ✅ **Transaction support**: Works within `prisma.$transaction()`
-- ✅ **Flexible prefixing**: Map-based or function-based prefix generation
-- ✅ **Custom primary keys**: Support for non-`id` fields and composite keys
-- ✅ **DMMF metadata**: Uses Prisma's metadata for accurate relation resolution
-- ✅ **Type safety**: Full TypeScript support with proper typing
+- **Basic creates**: `prisma.user.create()`
+- **Nested creates**: Creating related records in a single operation
+- **Batch creates**: `prisma.user.createMany()`
+- **Batch creates with return**: `prisma.user.createManyAndReturn()` (Prisma 6+)
+- **Upsert operations**: `prisma.user.upsert()` (generates ID for create portion)
+- **Nested upserts**: Handles nested `upsert` in relations
+- **Connect or create**: Nested `connectOrCreate` operations
+- **Transaction support**: Works within `prisma.$transaction()`
+- **Flexible prefixing**: Map-based or function-based prefix generation
+- **Custom primary keys**: Support for non-`id` fields and composite keys
+- **DMMF metadata**: Uses Prisma's metadata for accurate relation resolution
+- **Type safety**: Full TypeScript support with proper typing
 
 ## Limitations
 
 Due to Prisma extension constraints, this library **cannot** handle:
 
-- ❌ **Raw queries**: `prisma.$executeRaw()` and `prisma.$queryRaw()` bypass extensions
-- ❌ **Database-level operations**: Direct SQL INSERTs, stored procedures, or triggers
-- ❌ **Schema-level defaults**: Cannot override `@default(cuid())` or `@default(uuid())` in schema
-- ❌ **External inserts**: Records created outside of Prisma Client (e.g., database admin tools)
-- ❌ **Retroactive ID generation**: Cannot generate KSUIDs for existing records
+- **Raw queries**: `prisma.$executeRaw()` and `prisma.$queryRaw()` bypass extensions
+- **Database-level operations**: Direct SQL INSERTs, stored procedures, or triggers
+- **Schema-level defaults**: Cannot override `@default(cuid())` or `@default(uuid())` in schema
+- **External inserts**: Records created outside of Prisma Client (e.g., database admin tools)
+- **Retroactive ID generation**: Cannot generate KSUIDs for existing records
 
 ## API Reference
 
@@ -344,9 +327,9 @@ The extension automatically generates KSUIDs for the following Prisma operations
   });
   ```
 
-### `generateKSUID(prefix?)` ⚠️ DEPRECATED
+### `generateKSUID(prefix?)` (Deprecated)
 
-> **Deprecated**: Use [@owpz/ksuid](https://github.com/owpz/ksuid) directly instead.
+> Deprecated: Use [@owpz/ksuid](https://github.com/owpz/ksuid) directly instead.
 
 Generates a K-Sortable Unique ID (KSUID).
 
@@ -361,11 +344,11 @@ Returns a string containing the generated KSUID with the optional prefix.
 #### Migration Guide
 
 ```typescript
-// ❌ Old way (deprecated)
+// Old way (deprecated)
 import { generateKSUID } from "@owpz/prisma-ksuid";
 const id = generateKSUID("usr_");
 
-// ✅ New way (recommended)
+// New way (recommended)
 import { KSUID } from "@owpz/ksuid";
 const id = "usr_" + KSUID.random().toString();
 ```
