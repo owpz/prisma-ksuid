@@ -15,6 +15,11 @@ on:
 permissions:
   contents: read
 
+# CodeQL is NOT defined here on purpose. This repository uses GitHub's
+# default code scanning setup, which already analyses javascript-typescript
+# and actions. An advanced CodeQL workflow cannot coexist with it - the SARIF
+# upload is rejected with "CodeQL analyses from advanced configurations cannot
+# be processed when the default setup is enabled".
 jobs:
   audit:
     name: Security Audit
@@ -40,37 +45,3 @@ jobs:
 
       - name: Run npm audit fix (dry run)
         run: npm audit fix --dry-run
-
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@977e6ceaea7361825998245d787fa3b4d6b9e5df # codeql-bundle-v2.27.0
-        with:
-          languages: javascript-typescript
-          queries: security-and-quality
-
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Generate Prisma client
-        run: npm run prisma:generate
-
-      - name: Build
-        run: npm run build
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@977e6ceaea7361825998245d787fa3b4d6b9e5df # codeql-bundle-v2.27.0

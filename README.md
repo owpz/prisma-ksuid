@@ -408,7 +408,8 @@ Vulnerabilities are reported through the [Security Policy](SECURITY.md).
 Automated checks run on every push and pull request, and weekly on a schedule:
 
 - **npm audit** at `moderate` and above, in both the Security and Tests workflows
-- **CodeQL** static analysis (`security-and-quality` queries)
+- **CodeQL** static analysis via GitHub's default code scanning setup
+  (JavaScript/TypeScript and GitHub Actions)
 - **Dependency Review** on pull requests
 - **OpenSSF Scorecard**, published to the code scanning dashboard
 - **Dependabot** for dependency updates
