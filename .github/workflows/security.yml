@@ -1,0 +1,47 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run security audit weekly on Mondays at 8 AM UTC
+    - cron: "0 8 * * 1"
+  # Allow the audit to be re-run on demand, e.g. to confirm a fix without
+  # waiting for the weekly schedule or pushing a commit
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# CodeQL is NOT defined here on purpose. This repository uses GitHub's
+# default code scanning setup, which already analyses javascript-typescript
+# and actions. An advanced CodeQL workflow cannot coexist with it - the SARIF
+# upload is rejected with "CodeQL analyses from advanced configurations cannot
+# be processed when the default setup is enabled".
+jobs:
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: "npm"
+
+      # Scripts are disabled deliberately: auditing does not need lifecycle
+      # scripts, and skipping them avoids executing dependency code in CI
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+
+      - name: Run npm audit fix (dry run)
+        run: npm audit fix --dry-run

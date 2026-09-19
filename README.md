@@ -2,6 +2,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![Tests](https://github.com/owpz/prisma-ksuid/actions/workflows/test.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/test.yml)
 [![Publish](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml)
+[![Security](https://github.com/owpz/prisma-ksuid/actions/workflows/security.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/security.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/owpz/prisma-ksuid/badge)](https://scorecard.dev/viewer/?uri=github.com/owpz/prisma-ksuid)
+[![Dependency Review](https://github.com/owpz/prisma-ksuid/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/dependency-review.yml)
 
 # @owpz/prisma-ksuid
 
@@ -380,6 +383,39 @@ This extension integrates seamlessly with Prisma's ecosystem:
 - **Transaction support** for consistent ID generation
 - **Migration compatible** with existing string primary keys
 - **Works with all databases** Prisma supports (PostgreSQL, MySQL, SQLite, etc.)
+
+## Versioning
+
+This project started out using **CalVer** (`YY.M.D`), which is why early releases
+carry dates as version numbers — `25.9.20` was published on 2025-09-20.
+
+As of **25.9.21**, the project follows **[SemVer](https://semver.org/)**. The public
+API and behavior have stayed consistent, so rather than resetting the version number
+and breaking `npm` upgrade paths, we keep the existing number as the SemVer baseline
+and increment from there:
+
+- **MAJOR** — breaking changes to the public API
+- **MINOR** — backward-compatible functionality
+- **PATCH** — bug fixes, dependency and security updates
+
+`25.9.21` is a **patch** release: it contains no API or functionality changes, only
+security updates to development dependencies.
+
+## Security
+
+Vulnerabilities are reported through the [Security Policy](SECURITY.md).
+
+Automated checks run on every push and pull request, and weekly on a schedule:
+
+- **npm audit** at `moderate` and above, in both the Security and Tests workflows
+- **CodeQL** static analysis via GitHub's default code scanning setup
+  (JavaScript/TypeScript and GitHub Actions)
+- **Dependency Review** on pull requests
+- **OpenSSF Scorecard**, published to the code scanning dashboard
+- **Dependabot** for dependency updates
+
+GitHub Actions are pinned to commit SHAs, and CI installs with `--ignore-scripts`
+so dependency lifecycle scripts do not execute in the build.
 
 ## License
 
