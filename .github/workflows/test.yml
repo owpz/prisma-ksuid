@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [22.x, 24.x, 26.x]
 
     steps:
       # Checkout repository code
@@ -58,3 +58,55 @@ jobs:
         uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3
         with:
           fail_ci_if_error: false
+
+  # Verify the published artifact runs on the floor declared in package.json
+  # "engines". Dev dependencies (ESLint 9, Prisma tooling) require newer Node,
+  # so we build on a current release and exercise only dist/ on the floor.
+  engines-floor:
+    name: Engines floor smoke test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18]
+
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+
+      # Build with a supported Node release
+      - name: Setup Node.js (build)
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.x
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Build package
+        run: npm run build
+
+      # Swap to the floor runtime; dist/ and the runtime dep are already in place
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Smoke test dist/ on Node ${{ matrix.node-version }}
+        run: |
+          node --version
+          node -e "
+            const ext = require('./dist/index.js');
+            if (typeof ext.createKsuidExtension !== 'function') {
+              throw new Error('createKsuidExtension missing from dist on ' + process.version);
+            }
+            const { generateKSUID } = require('./dist/util/ksuid.js');
+            const id = generateKSUID('usr_');
+            if (!/^usr_[0-9A-Za-z]{27}$/.test(id)) {
+              throw new Error('unexpected ksuid shape: ' + id);
+            }
+            console.log('ok', process.version, id);
+          "
