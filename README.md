@@ -4,7 +4,6 @@
 [![Publish](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/publish.yml)
 [![Security](https://github.com/owpz/prisma-ksuid/actions/workflows/security.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/security.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/owpz/prisma-ksuid/badge)](https://scorecard.dev/viewer/?uri=github.com/owpz/prisma-ksuid)
-[![Dependency Review](https://github.com/owpz/prisma-ksuid/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/owpz/prisma-ksuid/actions/workflows/dependency-review.yml)
 
 # @owpz/prisma-ksuid
 
